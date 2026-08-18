@@ -4,6 +4,8 @@ backend:
   branch: main
   # OAuth 代理由本项目自带的 Cloudflare Pages Function 提供
   base_url: https://blog.neutronstar.fun/api/oauth
+  # 自定义 OAuth 代理走 implicit 模式：callback 把 token 放进 URL fragment 交还 Decap
+  auth_type: implicit
   auth_scope: repo
 
 # 媒体文件：在后台上传的图片存到仓库 public/uploads，站点以 /uploads 访问
