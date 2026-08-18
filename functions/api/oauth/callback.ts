@@ -1,44 +1,32 @@
-// Decap CMS GitHub OAuth 代理 —— 回调换取 token 并交还 Decap
-// GitHub 回调：{base_url}/callback?code=...&state=...
+// Decap CMS GitHub OAuth 代理 —— 回调换取 token，并通过 NetlifyAuthenticator 弹窗协议回传
+// GitHub 回跳：{base_url}/api/oauth/callback?code=...&state=...
+//
+// 关键：本函数运行在【弹窗】里。必须用品窗 postMessage 把 token 发回主窗口（window.opener），
+// 而不能重定向到 admin#access_token —— NetlifyAuthenticator 等的是 postMessage，不是 URL fragment。
+//
+// 协议（来自 Decap v3.3.3 NetlifyAuthenticator）：
+//   主窗口先监听 handshake：收到 "authorizing:github" 且 r.origin === base_url 后，注册真正的回调监听；
+//   随后收到 "authorization:github:success:<json>" 即登录成功（json 需含 {token}），
+//   收到 "authorization:github:error:<json>" 即登录失败。
 export const onRequest: PagesFunction = async (ctx) => {
   const url = new URL(ctx.request.url);
   const code = url.searchParams.get("code");
-  const state = url.searchParams.get("state") || "";
+  const ghError = url.searchParams.get("error");
+  const ghErrorDesc = url.searchParams.get("error_description");
 
   const clientId = ctx.env.OAUTH_CLIENT_ID;
   const clientSecret = ctx.env.OAUTH_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
-    return new Response("缺少 OAUTH_CLIENT_ID / OAUTH_CLIENT_SECRET 环境变量", { status: 500 });
+    return renderPopup(null, "缺少 OAUTH_CLIENT_ID / OAUTH_CLIENT_SECRET 环境变量");
   }
-
-  // 从 /auth 阶段写入的 cookie 取回 admin 回跳地址
-  const cookie = ctx.request.headers.get("Cookie") || "";
-  const m = cookie.match(/decap_redirect=([^;]+)/);
-  const adminUrl = m ? decodeURIComponent(m[1]) : "https://blog.neutronstar.fun/admin/";
 
   if (!code) {
-    const ghErr = url.searchParams.get("error");
-    const ghDesc = url.searchParams.get("error_description");
-    console.error(
-      "GitHub 回调未带 code，query=",
-      url.search,
-      "cookie=",
-      cookie,
-    );
-    if (ghErr) {
-      // GitHub 在授权回调里直接回了 error（最常见 redirect_uri_mismatch / access_denied），
-      // 把它透传给前端，避免静默弹回登录界面让人摸不着头脑。
-      return new Response(
-        `GitHub 授权回调报错：error=${ghErr}` +
-          (ghDesc ? `；${ghDesc}` : "") +
-          `\n（state=${state}）`,
-        { status: 400 },
-      );
-    }
-    return Response.redirect(adminUrl, 302);
+    const msg = ghError
+      ? `GitHub 授权失败：${ghError}${ghErrorDesc ? " - " + ghErrorDesc : ""}`
+      : "GitHub 未回传 code（可能你取消了授权）";
+    return renderPopup(null, msg);
   }
 
-  let tokenData: { access_token?: string; error?: string; error_description?: string };
   try {
     const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
       method: "POST",
@@ -50,31 +38,54 @@ export const onRequest: PagesFunction = async (ctx) => {
         redirect_uri: url.origin + "/api/oauth/callback",
       }),
     });
-    tokenData = (await tokenRes.json()) as typeof tokenData;
+    const tokenData = (await tokenRes.json()) as {
+      access_token?: string;
+      error?: string;
+      error_description?: string;
+    };
+    const accessToken = tokenData.access_token;
+    if (!accessToken) {
+      const detail =
+        (tokenData.error ? `error=${tokenData.error}` : "") +
+        (tokenData.error_description ? `; ${tokenData.error_description}` : "");
+      return renderPopup(null, "换取 GitHub token 失败：" + (detail || "GitHub 未返回 access_token"));
+    }
+    return renderPopup(accessToken, null);
   } catch (e) {
-    return new Response(
-      "调用 GitHub 换取 token 时异常：" + (e instanceof Error ? e.message : String(e)),
-      { status: 502 },
-    );
+    return renderPopup(null, "调用 GitHub 换取 token 时异常：" + (e instanceof Error ? e.message : String(e)));
   }
-  const accessToken = tokenData.access_token;
-  if (!accessToken) {
-    // 把 GitHub 返回的真实错误透传出来，方便排查（最常见的就是 client_secret 不匹配 / code 已用过）
-    const detail =
-      (tokenData.error ? `error=${tokenData.error}` : "") +
-      (tokenData.error_description ? `; ${tokenData.error_description}` : "");
-    console.error("GitHub token exchange failed:", detail, "clientId=", clientId);
-    return new Response("换取 GitHub token 失败：" + (detail || "GitHub 未返回 access_token"), {
-      status: 400,
-    });
-  }
-
-  // Decap 的 github 后端从 URL fragment 读取 access_token
-  const fragment = new URLSearchParams({
-    access_token: accessToken,
-    state,
-    token_type: "bearer",
-  }).toString();
-  const sep = adminUrl.includes("#") ? "&" : "#";
-  return Response.redirect(adminUrl + sep + fragment, 302);
 };
+
+// 在【弹窗】里渲染脚本：先握手 "authorizing:github"，再回传 success/error。
+function renderPopup(token: string | null, errMsg: string | null): Response {
+  const payload = token
+    ? "authorization:github:success:" + JSON.stringify({ token })
+    : "authorization:github:error:" + JSON.stringify({ message: errMsg || "未知错误" });
+  const html = `<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Decap 登录中…</title></head>
+<body>
+<script>
+(function () {
+  var payload = ${JSON.stringify(payload)};
+  try {
+    if (window.opener) {
+      // 先发握手信号（主窗口据此注册回调监听），再发真正的 token / error
+      window.opener.postMessage("authorizing:github", location.origin);
+      window.opener.postMessage(payload, location.origin);
+      window.close();
+    } else {
+      document.body.textContent = payload;
+    }
+  } catch (e) {
+    document.body.textContent = "回调脚本出错：" + (e && e.message ? e.message : e);
+  }
+})();
+</script>
+</body>
+</html>`;
+  return new Response(html, {
+    status: 200,
+    headers: { "Content-Type": "text/html; charset=utf-8" },
+  });
+}
