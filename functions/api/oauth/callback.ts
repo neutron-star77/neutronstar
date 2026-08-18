@@ -20,20 +20,35 @@ export const onRequest: PagesFunction = async (ctx) => {
     return Response.redirect(adminUrl, 302);
   }
 
-  const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({
-      client_id: clientId,
-      client_secret: clientSecret,
-      code,
-      redirect_uri: url.origin + "/api/oauth/callback",
-    }),
-  });
-  const tokenData = (await tokenRes.json()) as { access_token?: string };
+  let tokenData: { access_token?: string; error?: string; error_description?: string };
+  try {
+    const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        client_id: clientId,
+        client_secret: clientSecret,
+        code,
+        redirect_uri: url.origin + "/api/oauth/callback",
+      }),
+    });
+    tokenData = (await tokenRes.json()) as typeof tokenData;
+  } catch (e) {
+    return new Response(
+      "调用 GitHub 换取 token 时异常：" + (e instanceof Error ? e.message : String(e)),
+      { status: 502 },
+    );
+  }
   const accessToken = tokenData.access_token;
   if (!accessToken) {
-    return new Response("换取 GitHub token 失败", { status: 400 });
+    // 把 GitHub 返回的真实错误透传出来，方便排查（最常见的就是 client_secret 不匹配 / code 已用过）
+    const detail =
+      (tokenData.error ? `error=${tokenData.error}` : "") +
+      (tokenData.error_description ? `; ${tokenData.error_description}` : "");
+    console.error("GitHub token exchange failed:", detail, "clientId=", clientId);
+    return new Response("换取 GitHub token 失败：" + (detail || "GitHub 未返回 access_token"), {
+      status: 400,
+    });
   }
 
   // Decap 的 github 后端从 URL fragment 读取 access_token
