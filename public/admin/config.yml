@@ -14,6 +14,11 @@ backend:
 media_folder: /public/uploads
 public_folder: /uploads
 
+# 编辑布局：仿 Typecho 写作页——关闭右侧实时预览，单栏主编辑区（标题+正文）+
+# 下方元数据两列小卡片（标签/日期/封面/草稿…）。预览关掉后更接近 Typecho 习惯。
+editor:
+  preview: false
+
 collections:
   - name: blog
     label: 博客文章
@@ -22,12 +27,12 @@ collections:
     slug: "{{slug}}"
     fields:
       - { name: title, label: 标题, widget: string }
+      - { name: body, label: 正文, widget: markdown }
       - { name: description, label: 摘要, widget: text, required: false }
-      - { name: pubDate, label: 发布日期, widget: datetime }
       - { name: tags, label: 标签, widget: list, required: false }
+      - { name: pubDate, label: 发布日期, widget: datetime }
       - { name: cover, label: 封面图, widget: image, required: false }
       - { name: draft, label: 草稿, widget: boolean, default: false, required: false }
-      - { name: body, label: 正文, widget: markdown }
 
   - name: diary
     label: 日记
@@ -36,10 +41,10 @@ collections:
     slug: "{{slug}}"
     fields:
       - { name: title, label: 标题, widget: string }
+      - { name: body, label: 正文, widget: markdown }
       - { name: date, label: 日期, widget: datetime }
       - { name: mood, label: 心情, widget: string, required: false }
       - { name: tags, label: 标签, widget: list, required: false }
-      - { name: body, label: 正文, widget: markdown }
 
   - name: project
     label: 项目
@@ -48,6 +53,7 @@ collections:
     slug: "{{slug}}"
     fields:
       - { name: title, label: 标题, widget: string }
+      - { name: body, label: 正文, widget: markdown }
       - { name: description, label: 摘要, widget: text, required: false }
       - { name: date, label: 日期, widget: datetime }
       - { name: tags, label: 标签, widget: list, required: false }
@@ -55,4 +61,3 @@ collections:
       - { name: link, label: 外链, widget: string, required: false }
       - { name: repo, label: 仓库, widget: string, required: false }
       - { name: featured, label: 精选, widget: boolean, default: false, required: false }
-      - { name: body, label: 正文, widget: markdown }

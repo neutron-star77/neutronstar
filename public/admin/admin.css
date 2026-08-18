@@ -1,0 +1,164 @@
+/* ============================================================
+   NeutronStar 写作后台 · Typecho 风格主题
+   目标：把 Decap CMS 默认编辑器改造成接近 Typecho 写作页的观感
+   （浅色、克制的蓝 #467b96、白卡片、标题/正文主栏 + 元数据两列小卡片）
+   仅用稳定钩子：真实元素(input/textarea/select/button/label) +
+   字段 id 前缀 "<name>-field-" + CodeMirror + :has() 选区。
+   ============================================================ */
+
+:root {
+  --tp-bg: #f5f5f4;
+  --tp-panel: #ffffff;
+  --tp-border: #e3e3df;
+  --tp-border-strong: #d7d7d1;
+  --tp-text: #333333;
+  --tp-muted: #999999;
+  --tp-accent: #467b96;
+  --tp-accent-d: #3a6a83;
+  --tp-radius: 3px;
+  --tp-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  --tp-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+html, body, #root {
+  background: var(--tp-bg) !important;
+  color: var(--tp-text) !important;
+  font-family: var(--tp-font) !important;
+  font-size: 14px;
+}
+
+/* 顶部栏 / 左侧集合导航：浅色 + 蓝色品牌 */
+header, nav, aside {
+  background: var(--tp-panel) !important;
+  color: var(--tp-text) !important;
+  border-color: var(--tp-border) !important;
+}
+a, a:hover { color: var(--tp-accent) !important; }
+
+/* ---------- 表单控件（与 Typecho 一致） ---------- */
+input[type="text"], input[type="email"], input[type="url"],
+input[type="password"], input[type="number"], input[type="search"],
+input[type="datetime-local"], input:not([type]), textarea, select {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--tp-panel) !important;
+  border: 1px solid var(--tp-border-strong) !important;
+  border-radius: var(--tp-radius) !important;
+  padding: 7px 9px !important;
+  color: var(--tp-text) !important;
+  font-size: 13px !important;
+  font-family: var(--tp-font) !important;
+  line-height: 1.5 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  transition: border-color .15s, box-shadow .15s;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--tp-accent) !important;
+  box-shadow: 0 0 0 2px rgba(70, 123, 150, .15) !important;
+}
+
+/* 字段标签：Typecho 风格（深灰、加粗、小号） */
+label {
+  color: #555 !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  margin-bottom: 6px !important;
+  display: block !important;
+}
+
+/* 按钮：中性浅色，主操作蓝 */
+button {
+  background: #f7f7f5 !important;
+  color: #444 !important;
+  border: 1px solid var(--tp-border-strong) !important;
+  border-radius: var(--tp-radius) !important;
+  padding: 6px 14px !important;
+  font-size: 13px !important;
+  font-family: var(--tp-font) !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+}
+button:hover { background: #efefec !important; border-color: #c9c9c2 !important; }
+
+/* ---------- 字段块：Typecho 选项行间距 ---------- */
+/* 标题块：整行 */
+div:has(> label[for^="title-field-"]) {
+  display: block !important;
+  width: 100% !important;
+  padding: 10px 0 14px !important;
+}
+/* 标题输入框：放大，仿 Typecho 大标题框 */
+input[id^="title-field-"] {
+  font-size: 1.35rem !important;
+  font-weight: 600 !important;
+  padding: 11px 13px !important;
+  border-color: #cfcfc8 !important;
+}
+
+/* 正文块：整行、与上方拉开间距 */
+div:has(> label[for^="body-field-"]) {
+  display: block !important;
+  width: 100% !important;
+  margin-bottom: 18px !important;
+}
+
+/* ---------- 元数据：两列小卡片（仿 Typecho 右侧设置区） ---------- */
+div:has(> label[for^="description-field-"]),
+div:has(> label[for^="tags-field-"]),
+div:has(> label[for^="pubDate-field-"]),
+div:has(> label[for^="date-field-"]),
+div:has(> label[for^="cover-field-"]),
+div:has(> label[for^="draft-field-"]),
+div:has(> label[for^="mood-field-"]),
+div:has(> label[for^="link-field-"]),
+div:has(> label[for^="repo-field-"]),
+div:has(> label[for^="featured-field-"]) {
+  display: inline-block !important;
+  width: 49% !important;
+  vertical-align: top !important;
+  box-sizing: border-box !important;
+  background: var(--tp-panel) !important;
+  border: 1px solid var(--tp-border) !important;
+  border-radius: var(--tp-radius) !important;
+  padding: 12px 14px !important;
+  margin: 0 1% 12px 0 !important;
+}
+/* 卡片内标签与控件再紧凑一点 */
+div:has(> label[for^="description-field-"]) label,
+div:has(> label[for^="tags-field-"]) label,
+div:has(> label[for^="pubDate-field-"]) label,
+div:has(> label[for^="date-field-"]) label,
+div:has(> label[for^="cover-field-"]) label,
+div:has(> label[for^="draft-field-"]) label,
+div:has(> label[for^="mood-field-"]) label,
+div:has(> label[for^="link-field-"]) label,
+div:has(> label[for^="repo-field-"]) label,
+div:has(> label[for^="featured-field-"]) label {
+  margin-bottom: 5px !important;
+}
+
+/* ---------- Markdown 正文编辑器（CodeMirror 5） ---------- */
+.CodeMirror {
+  border: 1px solid var(--tp-border-strong) !important;
+  border-radius: var(--tp-radius) !important;
+  background: var(--tp-panel) !important;
+  min-height: 460px !important;
+  font-family: var(--tp-mono) !important;
+  font-size: 13px !important;
+  line-height: 1.7 !important;
+}
+.CodeMirror-scroll { min-height: 460px !important; }
+.CodeMirror-cursor { border-left: 1px solid var(--tp-text) !important; }
+.cm-header, .cm-strong { color: var(--tp-accent-d) !important; }
+
+/* 编辑器工具栏（视觉/源码切换 + 加粗等按钮） */
+.cms-editor-visual, .cms-editor-raw {
+  border: 1px solid var(--tp-border) !important;
+  background: #fafafa !important;
+  color: var(--tp-muted) !important;
+  border-radius: var(--tp-radius) !important;
+  padding: 2px 8px !important;
+}
+.cms-editor-raw { margin-left: 4px !important; }
