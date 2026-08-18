@@ -17,6 +17,24 @@ export const onRequest: PagesFunction = async (ctx) => {
   const adminUrl = m ? decodeURIComponent(m[1]) : "https://blog.neutronstar.fun/admin/";
 
   if (!code) {
+    const ghErr = url.searchParams.get("error");
+    const ghDesc = url.searchParams.get("error_description");
+    console.error(
+      "GitHub 回调未带 code，query=",
+      url.search,
+      "cookie=",
+      cookie,
+    );
+    if (ghErr) {
+      // GitHub 在授权回调里直接回了 error（最常见 redirect_uri_mismatch / access_denied），
+      // 把它透传给前端，避免静默弹回登录界面让人摸不着头脑。
+      return new Response(
+        `GitHub 授权回调报错：error=${ghErr}` +
+          (ghDesc ? `；${ghDesc}` : "") +
+          `\n（state=${state}）`,
+        { status: 400 },
+      );
+    }
     return Response.redirect(adminUrl, 302);
   }
 
