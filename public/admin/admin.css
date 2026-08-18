@@ -1,9 +1,14 @@
 /* ============================================================
-   NeutronStar 写作后台 · Typecho 风格主题
-   目标：把 Decap CMS 默认编辑器改造成接近 Typecho 写作页的观感
-   （浅色、克制的蓝 #467b96、白卡片、标题/正文主栏 + 元数据两列小卡片）
-   仅用稳定钩子：真实元素(input/textarea/select/button/label) +
-   字段 id 前缀 "<name>-field-" + CodeMirror + :has() 选区。
+   NeutronStar 写作后台 · Typecho 风格主题（真·双栏版）
+   布局目标：仿 Typecho 写作页
+     - 左栏（主编辑区）：标题 + 正文，占满主区
+     - 右栏（设置区）：摘要/标签/日期/封面/草稿… 固定（sticky）小卡片
+   技术约束（Decap v3.3.3 已读打包源码确证）：
+     - 编辑器主区域 = 一个「公共父 div」平铺 N 个 EditorControl 字段块（每个块根 div
+       内含 label[for^="<name>-field-"]）。该父 div 无稳定字面 class。
+     - 由 index.html 注入的 MutationObserver 在运行时给该公共父 div 加 class
+       `.ns-editor-grid`，本 CSS 即针对它做两列 grid（绕开脆弱的嵌套 :has）。
+     - 字段 id 前缀 "<name>-field-"、CodeMirror(.CodeMirror) 为稳定钩子。
    ============================================================ */
 
 :root {
@@ -19,6 +24,7 @@
   --tp-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
     "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
   --tp-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  --tp-sidebar-w: 340px;
 }
 
 html, body, #root {
@@ -82,78 +88,51 @@ button {
 }
 button:hover { background: #efefec !important; border-color: #c9c9c2 !important; }
 
-/* ---------- 字段块：Typecho 选项行间距 ---------- */
-/* 标题块：整行 */
-div:has(> label[for^="title-field-"]) {
-  display: block !important;
-  width: 100% !important;
-  padding: 10px 0 14px !important;
+/* ============================================================
+   真·双栏：由运行时脚本给字段块公共父加 .ns-editor-grid
+   ============================================================ */
+.ns-editor-grid {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) var(--tp-sidebar-w) !important;
+  gap: 24px !important;
+  align-items: start !important;
+  max-width: 1280px !important;
+  margin: 0 auto !important;
+  padding: 24px 28px !important;
 }
+
+/* 左栏：标题 + 正文（占第 1 列） */
+.ns-editor-grid > div:has(> label[for^="title-field-"]),
+.ns-editor-grid > div:has(> label[for^="body-field-"]) {
+  grid-column: 1 / 2 !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 0 18px 0 !important;
+  display: block !important;
+}
+
 /* 标题输入框：放大，仿 Typecho 大标题框 */
-input[id^="title-field-"] {
+.ns-editor-grid input[id^="title-field-"] {
   font-size: 1.35rem !important;
   font-weight: 600 !important;
   padding: 11px 13px !important;
   border-color: #cfcfc8 !important;
 }
 
-/* 正文块：整行、与上方拉开间距 */
-div:has(> label[for^="body-field-"]) {
-  display: block !important;
-  width: 100% !important;
-  margin-bottom: 18px !important;
-}
-
-/* ---------- 元数据：两列小卡片（仿 Typecho 右侧设置区） ---------- */
-div:has(> label[for^="description-field-"]),
-div:has(> label[for^="tags-field-"]),
-div:has(> label[for^="pubDate-field-"]),
-div:has(> label[for^="date-field-"]),
-div:has(> label[for^="cover-field-"]),
-div:has(> label[for^="draft-field-"]),
-div:has(> label[for^="mood-field-"]),
-div:has(> label[for^="link-field-"]),
-div:has(> label[for^="repo-field-"]),
-div:has(> label[for^="featured-field-"]) {
-  display: inline-block !important;
-  width: 49% !important;
-  vertical-align: top !important;
-  box-sizing: border-box !important;
-  background: var(--tp-panel) !important;
-  border: 1px solid var(--tp-border) !important;
-  border-radius: var(--tp-radius) !important;
-  padding: 12px 14px !important;
-  margin: 0 1% 12px 0 !important;
-}
-/* 卡片内标签与控件再紧凑一点 */
-div:has(> label[for^="description-field-"]) label,
-div:has(> label[for^="tags-field-"]) label,
-div:has(> label[for^="pubDate-field-"]) label,
-div:has(> label[for^="date-field-"]) label,
-div:has(> label[for^="cover-field-"]) label,
-div:has(> label[for^="draft-field-"]) label,
-div:has(> label[for^="mood-field-"]) label,
-div:has(> label[for^="link-field-"]) label,
-div:has(> label[for^="repo-field-"]) label,
-div:has(> label[for^="featured-field-"]) label {
-  margin-bottom: 5px !important;
-}
-
-/* ---------- Markdown 正文编辑器（CodeMirror 5） ---------- */
-.CodeMirror {
+/* 正文 markdown 编辑器（CodeMirror 5） */
+.ns-editor-grid .CodeMirror {
   border: 1px solid var(--tp-border-strong) !important;
   border-radius: var(--tp-radius) !important;
   background: var(--tp-panel) !important;
-  min-height: 460px !important;
   font-family: var(--tp-mono) !important;
   font-size: 13px !important;
   line-height: 1.7 !important;
+  min-height: 520px !important;
 }
-.CodeMirror-scroll { min-height: 460px !important; }
+.ns-editor-grid .CodeMirror-scroll { min-height: 520px !important; }
 .CodeMirror-cursor { border-left: 1px solid var(--tp-text) !important; }
 .cm-header, .cm-strong { color: var(--tp-accent-d) !important; }
-
-/* 编辑器工具栏（视觉/源码切换 + 加粗等按钮） */
 .cms-editor-visual, .cms-editor-raw {
   border: 1px solid var(--tp-border) !important;
   background: #fafafa !important;
@@ -162,3 +141,62 @@ div:has(> label[for^="featured-field-"]) label {
   padding: 2px 8px !important;
 }
 .cms-editor-raw { margin-left: 4px !important; }
+
+/* 右栏：元数据字段块（占第 2 列，固定） */
+.ns-editor-grid > div:has(> label[for^="description-field-"]),
+.ns-editor-grid > div:has(> label[for^="tags-field-"]),
+.ns-editor-grid > div:has(> label[for^="pubDate-field-"]),
+.ns-editor-grid > div:has(> label[for^="date-field-"]),
+.ns-editor-grid > div:has(> label[for^="cover-field-"]),
+.ns-editor-grid > div:has(> label[for^="draft-field-"]),
+.ns-editor-grid > div:has(> label[for^="mood-field-"]),
+.ns-editor-grid > div:has(> label[for^="link-field-"]),
+.ns-editor-grid > div:has(> label[for^="repo-field-"]),
+.ns-editor-grid > div:has(> label[for^="featured-field-"]) {
+  grid-column: 2 / 3 !important;
+  position: sticky !important;
+  top: 84px !important;
+  align-self: start !important;
+  background: var(--tp-panel) !important;
+  border: 1px solid var(--tp-border) !important;
+  border-radius: var(--tp-radius) !important;
+  padding: 12px 14px !important;
+  margin: 0 0 12px 0 !important;
+  display: block !important;
+  width: 100% !important;
+}
+.ns-editor-grid > div:has(> label[for^="description-field-"]) label,
+.ns-editor-grid > div:has(> label[for^="tags-field-"]) label,
+.ns-editor-grid > div:has(> label[for^="pubDate-field-"]) label,
+.ns-editor-grid > div:has(> label[for^="date-field-"]) label,
+.ns-editor-grid > div:has(> label[for^="cover-field-"]) label,
+.ns-editor-grid > div:has(> label[for^="draft-field-"]) label,
+.ns-editor-grid > div:has(> label[for^="mood-field-"]) label,
+.ns-editor-grid > div:has(> label[for^="link-field-"]) label,
+.ns-editor-grid > div:has(> label[for^="repo-field-"]) label,
+.ns-editor-grid > div:has(> label[for^="featured-field-"]) label {
+  margin-bottom: 5px !important;
+}
+
+/* 窄屏降级：单栏堆叠，右栏取消 sticky */
+@media (max-width: 900px) {
+  .ns-editor-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 0 !important;
+  }
+  .ns-editor-grid > div:has(> label[for^="title-field-"]),
+  .ns-editor-grid > div:has(> label[for^="body-field-"]),
+  .ns-editor-grid > div:has(> label[for^="description-field-"]),
+  .ns-editor-grid > div:has(> label[for^="tags-field-"]),
+  .ns-editor-grid > div:has(> label[for^="pubDate-field-"]),
+  .ns-editor-grid > div:has(> label[for^="date-field-"]),
+  .ns-editor-grid > div:has(> label[for^="cover-field-"]),
+  .ns-editor-grid > div:has(> label[for^="draft-field-"]),
+  .ns-editor-grid > div:has(> label[for^="mood-field-"]),
+  .ns-editor-grid > div:has(> label[for^="link-field-"]),
+  .ns-editor-grid > div:has(> label[for^="repo-field-"]),
+  .ns-editor-grid > div:has(> label[for^="featured-field-"]) {
+    grid-column: 1 / -1 !important;
+    position: static !important;
+  }
+}

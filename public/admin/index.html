@@ -14,5 +14,30 @@
     <!-- 注意：版本必须钉死到确切版本（3.3.3）。用 ^3.3.3 这类范围 unpkg 会 404/解析不一致，
          导致浏览器跑到任意版本，其 GitHub OAuth 的 state/nonce 回传逻辑与本代理不匹配而登录失败。 -->
     <script src="https://unpkg.com/decap-cms@3.3.3/dist/decap-cms.js"></script>
+    <script>
+      // 真·双栏：Decap 编辑器字段块的公共父 div 无稳定 class，
+      // 这里用 MutationObserver 在渲染后给它加 .ns-editor-grid，由 admin.css 做两列 grid。
+      (function () {
+        function applyGrid() {
+          var title = document.querySelector('[id^="title-field-"]');
+          if (!title) return;
+          // 字段块根 div（含 label 的那个）→ 公共父即它的 parentElement
+          var blockRoot = title.closest('div');
+          while (blockRoot && !blockRoot.querySelector('label[for^="title-field-"]')) {
+            blockRoot = blockRoot.parentElement;
+          }
+          if (!blockRoot) return;
+          var grid = blockRoot.parentElement;
+          if (grid && grid.classList) grid.classList.add('ns-editor-grid');
+        }
+        var mo = new MutationObserver(applyGrid);
+        mo.observe(document.documentElement, { childList: true, subtree: true });
+        // 立即尝试一次（若已渲染）
+        applyGrid();
+        // 进入编辑页是 SPA 跳转，持续补加一段时间以防漏掉
+        var t = setInterval(applyGrid, 800);
+        setTimeout(function () { clearInterval(t); }, 20000);
+      })();
+    </script>
   </body>
 </html>
