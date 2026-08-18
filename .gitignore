@@ -4,6 +4,8 @@ dist
 .astro
 astro
 */.astro
+package-lock.json
+yarn.lock
 
 # 工作记忆（隐私，不进仓库）
 .codebuddy
