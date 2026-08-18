@@ -14,17 +14,21 @@ export const SITE = {
 	author: "NeutronStar",
 	lang: "zh-CN",
 	url: "https://blog.neutronstar.fun",
+	// Mizuki 设计令牌：主色相（MD3 用 --hue 驱动 --primary 等）
+	hue: 270,
+	// 首页 Banner 背景图（Mizuki 标志性横幅）
+	banner: "https://cdn.jsdelivr.net/gh/neutron-star77/fastimage@main/2026/08/559.webp",
 };
 
-// 一级导航
+// 一级导航（icon 为 Material Symbols Rounded 名称，对齐 Mizuki 顶栏）
 export const NAV: NavItem[] = [
-	{ text: "首页", link: "/", icon: "🏠" },
-	{ text: "说说", link: "/diary", icon: "🌌" },
-	{ text: "书架", link: "/bookshelf", icon: "📚" },
-	{ text: "杂谈", link: "/blog", icon: "📡" },
-	{ text: "友链", link: "/friends", icon: "🔗" },
-	{ text: "归档", link: "/archive", icon: "🗂️" },
-	{ text: "关于", link: "/about", icon: "👤" },
+	{ text: "首页", link: "/", icon: "home" },
+	{ text: "说说", link: "/diary", icon: "auto_stories" },
+	{ text: "书架", link: "/bookshelf", icon: "menu_book" },
+	{ text: "杂谈", link: "/blog", icon: "forum" },
+	{ text: "友链", link: "/friends", icon: "link" },
+	{ text: "归档", link: "/archive", icon: "archive" },
+	{ text: "关于", link: "/about", icon: "person" },
 ];
 
 // 社交链接

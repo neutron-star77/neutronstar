@@ -8,10 +8,10 @@ const firstChar = (s: string) => (s || "?").slice(0, 1);
 <Base title="友链" description="朋友们的站点">
 	<section class="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6">
 		<header class="mb-8">
-			<h1 class="flex items-center gap-2 text-3xl font-bold text-[var(--color-text)]">
-				<span class="text-[var(--brand)]">🔗</span> 友链
+			<h1 class="flex items-center gap-2 text-3xl font-bold text-[var(--deep-text)]">
+				<span>🔗</span> 友链
 			</h1>
-			<p class="mt-2 text-sm text-[var(--color-text-muted)]">
+			<p class="mt-2 text-sm text-[var(--content-meta)]">
 				互相串门的好地方。想交换友链？欢迎留言或邮件联系我。
 			</p>
 		</header>
@@ -23,10 +23,10 @@ const firstChar = (s: string) => (s || "?").slice(0, 1);
 						href={f.url}
 						target="_blank"
 						rel="noopener"
-						class="group flex items-center gap-4 rounded-xl border border-white/10 bg-[var(--color-surface)]/70 p-4 shadow-lg shadow-black/20 backdrop-blur-md transition hover:-translate-y-1 hover:border-[var(--brand)]/50"
-						style={`border-left:3px solid ${f.color ?? "var(--brand)"}`}
+						class="group flex items-center gap-4 rounded-xl border border-[var(--line-divider)] bg-[var(--card-bg)]/70 p-4 shadow-sm transition hover:-translate-y-1 hover:border-[var(--primary)]/50"
+						style={`border-left:3px solid ${f.color ?? "var(--primary)"}`}
 					>
-						<div class="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-[var(--brand)] to-[var(--brand-3)] text-white flex items-center justify-center text-lg font-bold">
+						<div class="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-[var(--btn-regular-bg)] text-[var(--btn-content)] flex items-center justify-center text-lg font-bold">
 							{f.avatar ? (
 								<img src={f.avatar} alt={f.name} class="h-full w-full object-cover" loading="lazy" />
 							) : (
@@ -34,10 +34,10 @@ const firstChar = (s: string) => (s || "?").slice(0, 1);
 							)}
 						</div>
 						<div class="min-w-0">
-							<p class="truncate font-semibold text-[var(--color-text)] group-hover:text-[var(--brand)]">
+							<p class="truncate font-semibold text-[var(--deep-text)] group-hover:text-[var(--primary)]">
 								{f.name}
 							</p>
-							<p class="truncate text-xs text-[var(--color-text-muted)]">
+							<p class="truncate text-xs text-[var(--content-meta)]">
 								{f.description ?? f.url}
 							</p>
 						</div>

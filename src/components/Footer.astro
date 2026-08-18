@@ -3,62 +3,61 @@ import { SITE, SOCIAL, NAV } from '../config';
 const year = new Date().getFullYear();
 ---
 
-<footer class="footer glass">
-  <div class="container footer-inner">
-    <div>
-      <div class="neon-text footer-title">{SITE.title}</div>
-      <p class="footer-desc">{SITE.description}</p>
-    </div>
-    <div class="footer-cols">
-      <div>
-        <h4>导航</h4>
-        <ul>
-          {NAV.map((n) => (
-            <li><a href={n.link}>{n.text}</a></li>
-          ))}
-        </ul>
-      </div>
-      <div>
-        <h4>链接</h4>
-        <ul>
-          <li><a href={SOCIAL.github} target="_blank" rel="noopener">GitHub</a></li>
-          <li><a href={SOCIAL.email}>Email</a></li>
-          <li><a href={SOCIAL.rss}>RSS</a></li>
-        </ul>
-      </div>
-    </div>
-  </div>
-  <div class="container footer-bottom">
-    © {year} {SITE.author} · 由 Astro 驱动 · 部署于 Cloudflare Pages
-  </div>
+<footer class="footer">
+	<div class="footer-inner">
+		<div>
+			<div class="footer-title">{SITE.title}</div>
+			<p class="footer-desc">{SITE.description}</p>
+		</div>
+		<div class="footer-cols">
+			<div>
+				<h4>导航</h4>
+				<ul>
+					{NAV.map((n) => (
+						<li><a href={n.link}>{n.text}</a></li>
+					))}
+				</ul>
+			</div>
+			<div>
+				<h4>链接</h4>
+				<ul>
+					<li><a href={SOCIAL.github} target="_blank" rel="noopener">GitHub</a></li>
+					<li><a href={SOCIAL.email}>Email</a></li>
+					<li><a href={SOCIAL.rss}>RSS</a></li>
+				</ul>
+			</div>
+		</div>
+	</div>
+	<div class="footer-bottom">
+		© {year} {SITE.author} · 由 Astro 驱动 · 部署于 Cloudflare Pages
+	</div>
 </footer>
 
 <style>
-  .footer {
-    margin-top: 4rem;
-    border-left: none;
-    border-right: none;
-    border-bottom: none;
-    border-radius: 0;
-  }
-  .footer-inner {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2rem;
-    justify-content: space-between;
-    padding-block: 2.5rem;
-  }
-  .footer-title { font-size: 1.3rem; font-weight: 700; }
-  .footer-desc { color: var(--muted); max-width: 26rem; margin: 0.5rem 0 0; }
-  .footer-cols { display: flex; gap: 3rem; }
-  .footer-cols h4 { margin: 0 0 0.6rem; color: var(--text); font-size: 0.95rem; }
-  .footer-cols ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.4rem; }
-  .footer-cols a { color: var(--muted); font-size: 0.9rem; }
-  .footer-cols a:hover { color: var(--primary); }
-  .footer-bottom {
-    padding-block: 1.2rem;
-    color: var(--muted);
-    font-size: 0.8rem;
-    border-top: 1px solid var(--border);
-  }
+	.footer {
+		margin-top: 2rem;
+		border-top: 1px solid var(--line-divider);
+		padding-block: 2rem;
+		color: var(--content-meta);
+	}
+	.footer-inner {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 2rem;
+		justify-content: space-between;
+	}
+	.footer-title { font-size: 1.3rem; font-weight: 700; color: var(--deep-text); }
+	.footer-desc { color: var(--content-meta); max-width: 26rem; margin: 0.5rem 0 0; }
+	.footer-cols { display: flex; gap: 3rem; }
+	.footer-cols h4 { margin: 0 0 0.6rem; color: var(--deep-text); font-size: 0.95rem; }
+	.footer-cols ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.4rem; }
+	.footer-cols a { color: var(--content-meta); font-size: 0.9rem; transition: color 0.15s; }
+	.footer-cols a:hover { color: var(--primary); }
+	.footer-bottom {
+		margin-top: 1.5rem;
+		padding-top: 1.2rem;
+		color: var(--content-meta);
+		font-size: 0.8rem;
+		border-top: 1px solid var(--line-divider);
+	}
 </style>

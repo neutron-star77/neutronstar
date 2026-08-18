@@ -1,51 +1,189 @@
 ---
-import '../styles/global.css';
-import Nav from '../components/Nav.astro';
-import Footer from '../components/Footer.astro';
-import BackToTop from '../components/BackToTop.astro';
-import Pio from '../components/Pio.astro';
-import { SITE } from '../config';
+import "../styles/global.css";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import Sidebar from "../components/Sidebar.astro";
+import BackToTop from "../components/BackToTop.astro";
+import SidebarTOC from "../components/SidebarTOC.svelte";
+import { SITE } from "../config";
 
 interface Props {
-  title?: string;
-  description?: string;
-  image?: string;
+	title?: string;
+	description?: string;
+	image?: string;
+	sidebar?: boolean;
+	headings?: { depth: number; slug: string; text: string }[];
+	banner?: string;
 }
 
-const { title, description = SITE.description, image } = Astro.props;
-const pageTitle = title ? `${title} · ${SITE.title}` : `${SITE.title} · ${SITE.subtitle}`;
+const {
+	title,
+	description = SITE.description,
+	image,
+	sidebar = true,
+	headings = [],
+	banner = "",
+} = Astro.props;
+
+const pageTitle = title
+	? `${title} · ${SITE.title}`
+	: `${SITE.title} · ${SITE.subtitle}`;
+const isHome = Astro.url.pathname === "/" || Astro.url.pathname === "";
+const bannerImg = banner || (isHome ? SITE.banner : "");
+const showBanner = !!bannerImg;
+const hue = SITE.hue ?? 270;
 ---
 
 <!doctype html>
-<html lang={SITE.lang}>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>{pageTitle}</title>
-    <meta name="description" content={description} />
-    <meta property="og:title" content={pageTitle} />
-    <meta property="og:description" content={description} />
-    {image && <meta property="og:image" content={image} />}
-    <meta property="og:type" content="website" />
-    <script is:inline>
-      (function () {
-        try {
-          var t = localStorage.getItem('theme');
-          var d = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          if (t === 'dark' || (!t && d)) document.documentElement.classList.add('dark');
-        } catch (e) {}
-      })();
-    </script>
-  </head>
-  <body>
-    <div class="top-gradient-highlight"></div>
-    <Nav />
-    <main class="container transition-main" style="padding-block: 5.5rem 4rem; min-height: 70vh;">
-      <slot />
-    </main>
-    <Footer />
-    <BackToTop />
-    <Pio />
-  </body>
+<html lang={SITE.lang} class="bg-(--page-bg) text-[14px] md:text-[16px]">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<title>{pageTitle}</title>
+		<meta name="description" content={description} />
+		<meta property="og:title" content={pageTitle} />
+		<meta property="og:description" content={description} />
+		{image && <meta property="og:image" content={image} />}
+		<meta property="og:type" content="website" />
+		<link
+			rel="alternate"
+			type="application/rss+xml"
+			title={SITE.title}
+			href={`${SITE.url}/rss.xml`}
+		/>
+		<script is:inline define:vars={{ hue }}>
+			(function () {
+				try {
+					document.documentElement.style.setProperty("--hue", String(hue));
+					var t = localStorage.getItem("theme");
+					var d = window.matchMedia("(prefers-color-scheme: dark)").matches;
+					if (t === "dark" || (!t && d))
+						document.documentElement.classList.add("dark");
+				} catch (e) {}
+			})();
+		</script>
+	</head>
+	<body class="min-h-screen">
+		<div class="top-gradient-highlight"></div>
+
+		<!-- 顶栏 -->
+		<div
+			id="top-row"
+			class="z-50 pointer-events-none relative transition-all duration-700 max-w-[var(--layout-page-width)] px-0 md:px-4 mx-auto"
+		>
+			<div id="navbar-wrapper" class="pointer-events-auto sticky top-0 transition-all">
+				<Nav />
+			</div>
+		</div>
+
+		<!-- Banner 横幅（对齐 Mizuki） -->
+		{
+			showBanner && (
+				<div
+					id="banner-wrapper"
+					class="absolute z-10 w-full transition duration-700 overflow-hidden"
+					style="top: -5vh; height: 35vh;"
+				>
+					<img
+						id="banner"
+						src={bannerImg}
+						alt="Banner"
+						class="object-cover h-full w-full"
+						style="object-position: center;"
+					/>
+					{isHome && (
+						<div class="banner-text-overlay absolute inset-0 z-20 flex items-center justify-center">
+							<div class="w-4/5 lg:w-3/4 text-center mb-0">
+								<h1 class="banner-title text-6xl lg:text-8xl text-white drop-shadow-lg mb-2 lg:mb-4">
+									{SITE.title}
+								</h1>
+								<h2 class="banner-subtitle text-xl lg:text-3xl text-white/90 drop-shadow-md">
+									{SITE.subtitle}
+								</h2>
+							</div>
+						</div>
+					)}
+				</div>
+			)
+		}
+
+		<!-- 主区域：两栏网格（对齐 Mizuki #main-grid） -->
+		<div
+			class="absolute w-full z-30 pointer-events-none"
+			style={`top: ${showBanner ? "30vh" : "5.5rem"}`}
+		>
+			<div class="relative max-w-[var(--layout-page-width)] mx-auto pointer-events-auto">
+				<div
+					id="main-grid"
+					class="transition duration-700 w-full grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_18rem] gap-4 px-2 md:px-4 mx-auto"
+				>
+					<main id="swup-container" class="main-col transition-main min-w-0">
+						<div id="content-wrapper" class="onload-animation">
+							<slot />
+						</div>
+						<div class="footer col-span-full onload-animation mt-8">
+							<Footer />
+						</div>
+					</main>
+					{sidebar && <Sidebar />}
+				</div>
+			</div>
+		</div>
+
+		<!-- 右侧 TOC（对齐 Mizuki 桌面端 fixed 侧栏） -->
+		{
+			headings.length > 0 && (
+				<div class="absolute w-full z-0 hidden xl:block">
+					<div class="relative max-w-[var(--layout-page-width)] mx-auto">
+						<div
+							id="toc-wrapper"
+							class="hidden xl:flex transition absolute top-0 w-[var(--toc-width)] items-center -right-[var(--toc-width)]"
+						>
+							<div
+								id="toc-inner-wrapper"
+								class="fixed top-14 w-[var(--toc-width)] h-[calc(100vh-6rem)] max-h-[calc(100vh-6rem)] overflow-x-hidden overflow-y-auto"
+							>
+								<div id="toc-container" class="w-full h-full">
+									<SidebarTOC client:only="svelte" headings={headings} />
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			)
+		}
+
+		<BackToTop />
+	</body>
 </html>
+
+<style is:global lang="stylus">
+	@import "../styles/variables.styl";
+
+	:root {
+		--layout-page-width: 82rem;
+	}
+</style>
+
+<style>
+	.banner-title {
+		text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+		animation: fadeInUp 1s ease-out;
+		font-weight: bold;
+	}
+	.banner-subtitle {
+		text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+		animation: fadeInUp 1s ease-out 0.3s both;
+	}
+	@keyframes fadeInUp {
+		from {
+			opacity: 0;
+			transform: translateY(30px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+</style>

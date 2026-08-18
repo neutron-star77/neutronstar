@@ -27,7 +27,7 @@ const { tag, posts } = Astro.props;
 ---
 
 <Base title={`#${tag}`} description={`标签 ${tag} 下的文章`}>
-  <h1 class="page-title">#<span class="neon-text">{tag}</span></h1>
+  <h1 class="page-title">#<span class="page-tag">{tag}</span></h1>
   <p class="page-sub">{posts.length} 篇</p>
   <div class="grid">
     {posts.map((p) => (
@@ -39,8 +39,9 @@ const { tag, posts } = Astro.props;
 </Base>
 
 <style>
-  .page-title { font-size: 2.2rem; margin: 0; }
-  .page-sub { color: var(--color-muted); margin: 0.4rem 0 2rem; }
+  .page-title { font-size: 2.2rem; margin: 0; color: var(--deep-text); }
+  .page-tag { color: var(--primary); }
+  .page-sub { color: var(--content-meta); margin: 0.4rem 0 2rem; }
   .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.2rem; }
   .back { margin-top: 2rem; }
   @media (max-width: 820px) { .grid { grid-template-columns: 1fr; } }

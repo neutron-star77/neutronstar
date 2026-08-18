@@ -22,18 +22,18 @@ const fmtDate = (d: Date) =>
 <Base title="归档" description="全部文章的归档">
 	<section class="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
 		<header class="mb-8">
-			<h1 class="flex items-center gap-2 text-3xl font-bold text-[var(--color-text)]">
-				<span class="text-[var(--brand)]">🗂️</span> 归档
+			<h1 class="flex items-center gap-2 text-3xl font-bold text-[var(--deep-text)]">
+				<span>🗂️</span> 归档
 			</h1>
-			<p class="mt-2 text-sm text-[var(--color-text-muted)]">共 {total} 篇文章。</p>
+			<p class="mt-2 text-sm text-[var(--content-meta)]">共 {total} 篇文章。</p>
 		</header>
 
 		{
 			years.map((year) => (
 				<div class="mb-10">
-					<div class="mb-3 flex items-baseline gap-3 border-b border-white/10 pb-2">
-						<span class="text-2xl font-bold text-[var(--brand)]">{year}</span>
-						<span class="text-xs text-[var(--color-text-muted)]">
+					<div class="mb-3 flex items-baseline gap-3 border-b border-[var(--line-divider)] pb-2">
+						<span class="text-2xl font-bold text-[var(--primary)]">{year}</span>
+						<span class="text-xs text-[var(--content-meta)]">
 							{byYear.get(year)!.length} 篇
 						</span>
 					</div>
@@ -42,16 +42,16 @@ const fmtDate = (d: Date) =>
 							<li>
 								<a
 									href={`/blog/${encodeURIComponent(p.id)}`}
-									class="group flex items-center gap-3 rounded-lg px-2 py-1.5 transition hover:bg-white/5"
+									class="group flex items-center gap-3 rounded-lg px-2 py-1.5 transition hover:bg-[var(--btn-plain-bg-hover)]"
 								>
-									<span class="w-12 shrink-0 font-mono text-xs text-[var(--color-text-muted)]">
+									<span class="w-12 shrink-0 font-mono text-xs text-[var(--content-meta)]">
 										{fmtDate(p.data.pubDate)}
 									</span>
-									<span class="flex-1 truncate text-sm text-[var(--color-text)] group-hover:text-[var(--brand)]">
+									<span class="flex-1 truncate text-sm text-[var(--deep-text)] group-hover:text-[var(--primary)]">
 										{p.data.title}
 									</span>
 									{p.data.tags && p.data.tags[0] && (
-										<span class="hidden shrink-0 rounded bg-white/5 px-2 py-0.5 text-[11px] text-[var(--color-text-muted)] sm:inline">
+										<span class="hidden shrink-0 rounded bg-[var(--btn-regular-bg)] px-2 py-0.5 text-[11px] text-[var(--btn-content)] sm:inline">
 											{p.data.tags[0]}
 										</span>
 									)}
@@ -65,7 +65,7 @@ const fmtDate = (d: Date) =>
 
 		{
 			total === 0 && (
-				<p class="rounded-xl border border-white/10 bg-[var(--color-surface)]/60 p-8 text-center text-[var(--color-text-muted)]">
+				<p class="rounded-xl border border-[var(--line-divider)] bg-[var(--card-bg)]/60 p-8 text-center text-[var(--content-meta)]">
 					还没有文章，去写一篇吧～
 				</p>
 			)

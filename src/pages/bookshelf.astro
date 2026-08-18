@@ -1,21 +1,25 @@
 ---
 import Base from "../layouts/Base.astro";
-import BookCard from "../components/BookCard.astro";
 import { books } from "../data/books";
 
 const total = books.length;
 const reading = books.filter((b) => b.status === "reading").length;
 const finished = books.filter((b) => b.status === "finished").length;
+
+const statusLabel: Record<string, string> = {
+	reading: "在读",
+	finished: "读完",
+	wishlist: "想读",
+};
 ---
 
 <Base title="书架" description="我的电子书书架 —— PDF / TXT / EPUB 阅读角落">
 	<section class="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
-		<!-- 页头 -->
 		<header class="mb-8">
-			<h1 class="flex items-center gap-2 text-3xl font-bold text-[var(--color-text)]">
-				<span class="text-[var(--brand)]">📚</span> 书架
+			<h1 class="flex items-center gap-2 text-3xl font-bold text-[var(--deep-text)]">
+				<span>📚</span> 书架
 			</h1>
-			<p class="mt-2 text-sm text-[var(--color-text-muted)]">
+			<p class="mt-2 text-sm text-[var(--content-meta)]">
 				共 {total} 本 · 在读 {reading} · 读完 {finished}。点击封面即可阅读或下载。
 			</p>
 		</header>
@@ -24,14 +28,65 @@ const finished = books.filter((b) => b.status === "finished").length;
 			books.length > 0 ? (
 				<div class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
 					{books.map((book) => (
-						<BookCard book={book} />
+						<a
+							href={book.url}
+							target="_blank"
+							rel="noopener"
+							class="book-card card-base"
+						>
+							<div class="book-cover">
+								{book.cover ? (
+									<img src={book.cover} alt={book.title} loading="lazy" />
+								) : (
+									<div class="book-cover-ph">{book.title.slice(0, 1)}</div>
+								)}
+								<span class={`book-status status-${book.status}`}>
+									{statusLabel[book.status] ?? book.status}
+								</span>
+							</div>
+							<div class="book-meta">
+								<div class="book-title">{book.title}</div>
+								<div class="book-author">{book.author}</div>
+							</div>
+						</a>
 					))}
 				</div>
 			) : (
-				<p class="rounded-xl border border-white/10 bg-[var(--color-surface)]/60 p-8 text-center text-[var(--color-text-muted)]">
+				<p class="rounded-xl border border-[var(--line-divider)] bg-[var(--card-bg)]/60 p-8 text-center text-[var(--content-meta)]">
 					书架还是空的，去 <code>src/data/books.ts</code> 添加你的第一本书吧～
 				</p>
 			)
 		}
 	</section>
 </Base>
+
+<style>
+	.book-card { display: block; padding: 0; transition: transform 0.2s; }
+	.book-card:hover { transform: translateY(-4px); }
+	.book-cover {
+		position: relative;
+		aspect-ratio: 3 / 4;
+		background: var(--btn-regular-bg);
+		overflow: hidden;
+	}
+	.book-cover img { width: 100%; height: 100%; object-fit: cover; }
+	.book-cover-ph {
+		width: 100%; height: 100%;
+		display: flex; align-items: center; justify-content: center;
+		font-size: 2.5rem; color: var(--btn-content); font-weight: 700;
+	}
+	.book-status {
+		position: absolute; top: 0.5rem; left: 0.5rem;
+		font-size: 0.65rem; padding: 0.1rem 0.4rem; border-radius: 999px;
+		background: var(--primary); color: #fff; font-weight: 600;
+	}
+	.book-meta { padding: 0.6rem 0.7rem 0.8rem; }
+	.book-title {
+		font-size: 0.85rem; font-weight: 600; color: var(--deep-text);
+		overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+	}
+	.book-author {
+		font-size: 0.72rem; color: var(--content-meta); margin-top: 0.15rem;
+		overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+	}
+</style>

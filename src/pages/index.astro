@@ -1,9 +1,8 @@
 ---
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
-import ParticleHero from '../components/ParticleHero.astro';
 import PostCard from '../components/PostCard.astro';
-import { SITE, GUITAO, HERO_IMAGE } from '../config';
+import { SITE, GUITAO } from '../config';
 
 const allBlog = (await getCollection('blog')).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 const allProjects = (await getCollection('project')).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
@@ -12,42 +11,60 @@ const recentProjects = allProjects.slice(0, 4);
 ---
 
 <Base>
-  <ParticleHero bg={HERO_IMAGE} />
+	<section class="section">
+		<div class="section-head">
+			<h2 class="section-title">最新杂谈</h2>
+			<a class="section-more" href="/blog">全部 →</a>
+		</div>
+		<div id="post-list-container" class="post-list-container grid-mode">
+			{recentBlog.map((p, i) => (
+				<div class="post-card-item">
+					<PostCard
+						href={`/blog/${p.id}`}
+						title={p.data.title}
+						description={p.data.description}
+						date={p.data.pubDate}
+						tags={p.data.tags}
+						cover={p.data.cover || GUITAO[i % GUITAO.length]}
+						kind="文章"
+					/>
+				</div>
+			))}
+		</div>
+	</section>
 
-  <section class="section">
-    <div class="section-head">
-      <h2 class="section-title">最新杂谈</h2>
-      <a class="section-more" href="/blog">全部 →</a>
-    </div>
-    <div class="grid">
-      {recentBlog.map((p, i) => (
-        <PostCard href={`/blog/${p.id}`} title={p.data.title} description={p.data.description}
-          date={p.data.pubDate} tags={p.data.tags} cover={p.data.cover || GUITAO[i % GUITAO.length]} kind="文章" />
-      ))}
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="section-head">
-      <h2 class="section-title">星舰项目</h2>
-      <a class="section-more" href="/projects">全部 →</a>
-    </div>
-    <div class="grid">
-      {recentProjects.map((p, i) => (
-        <PostCard href={`/projects/${p.id}`} title={p.data.title} description={p.data.description}
-          date={p.data.date} tags={p.data.tags} cover={p.data.cover || GUITAO[(i + 5) % GUITAO.length]} kind="项目" />
-      ))}
-    </div>
-  </section>
+	<section class="section">
+		<div class="section-head">
+			<h2 class="section-title">星舰项目</h2>
+			<a class="section-more" href="/projects">全部 →</a>
+		</div>
+		<div id="post-list-container" class="post-list-container grid-mode">
+			{recentProjects.map((p, i) => (
+				<div class="post-card-item">
+					<PostCard
+						href={`/projects/${p.id}`}
+						title={p.data.title}
+						description={p.data.description}
+						date={p.data.date}
+						tags={p.data.tags}
+						cover={p.data.cover || GUITAO[(i + 5) % GUITAO.length]}
+						kind="项目"
+					/>
+				</div>
+			))}
+		</div>
+	</section>
 </Base>
 
 <style>
-  .section { margin-top: 4rem; }
-  .section-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1.4rem; }
-  .section-title { font-size: 1.5rem; margin: 0; }
-  .section-more { color: var(--color-neon); font-size: 0.9rem; text-decoration: none; }
-  .section-more:hover { text-decoration: underline; }
-  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; }
-  @media (max-width: 900px) { .grid { grid-template-columns: repeat(2, 1fr); } }
-  @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+	.section { margin-top: 2.5rem; }
+	.section-head {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		margin-bottom: 1.4rem;
+	}
+	.section-title { font-size: 1.5rem; margin: 0; color: var(--deep-text); }
+	.section-more { color: var(--primary); font-size: 0.9rem; text-decoration: none; }
+	.section-more:hover { text-decoration: underline; }
 </style>

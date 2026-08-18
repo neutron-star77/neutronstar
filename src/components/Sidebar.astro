@@ -1,0 +1,182 @@
+---
+import { getCollection } from "astro:content";
+import { SITE, SOCIAL } from "../config";
+
+const blog = await getCollection("blog");
+const diary = await getCollection("diary");
+const project = await getCollection("project");
+
+// 聚合标签（去重 + 计数）
+const tagCount = new Map<string, number>();
+for (const c of [blog, diary, project]) {
+	for (const item of c) {
+		for (const t of item.data.tags ?? []) {
+			tagCount.set(t, (tagCount.get(t) ?? 0) + 1);
+		}
+	}
+}
+const tags = [...tagCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 24);
+const postCount = blog.length + diary.length + project.length;
+
+// 分类（按集合）
+const categories = [
+	{ name: "杂谈", icon: "forum", count: blog.length, link: "/blog" },
+	{ name: "说说", icon: "auto_stories", count: diary.length, link: "/diary" },
+	{ name: "项目", icon: "code", count: project.length, link: "/projects" },
+];
+
+// 建站天数
+const siteStart = new Date("2025-01-01");
+const days = Math.floor((Date.now() - siteStart.getTime()) / 86400000);
+
+const socials = [
+	{ icon: "code", label: "GitHub", href: SOCIAL.github },
+	{ icon: "mail", label: "Email", href: SOCIAL.email },
+	{ icon: "rss_feed", label: "RSS", href: SOCIAL.rss },
+];
+---
+
+<aside class="sidebar" aria-label="侧边栏">
+	<!-- 个人卡片（对齐 Mizuki Profile） -->
+	<section class="card-base widget profile">
+		<img class="avatar" src="/favicon.svg" alt={SITE.title} />
+		<div class="p-name">{SITE.title}</div>
+		<div class="p-sub">{SITE.subtitle}</div>
+		<div class="p-socials">
+			{
+				socials.map((s) => (
+					<a
+						class="p-social"
+						href={s.href}
+						target="_blank"
+						rel="noopener"
+						title={s.label}
+						aria-label={s.label}
+					>
+						<span class="material-symbols-rounded text-[1.1rem]">{s.icon}</span>
+					</a>
+				))
+			}
+		</div>
+	</section>
+
+	<!-- 分类（对齐 Mizuki Categories） -->
+	<section class="card-base widget">
+		<h3 class="widget-title"><span class="material-symbols-rounded text-[1.15rem]">category</span>分类</h3>
+		<ul class="cat-list">
+			{
+				categories.map((c) => (
+					<li>
+						<a href={c.link} class="cat-item">
+							<span class="material-symbols-rounded text-[1.1rem]">{c.icon}</span>
+							<span class="cat-name">{c.name}</span>
+							<span class="cat-num">{c.count}</span>
+						</a>
+					</li>
+				))
+			}
+		</ul>
+	</section>
+
+	<!-- 标签云（对齐 Mizuki Tags） -->
+	<section class="card-base widget">
+		<h3 class="widget-title"><span class="material-symbols-rounded text-[1.15rem]">sell</span>标签</h3>
+		<div class="tag-cloud">
+			{
+				tags.map(([t, n]) => (
+					<a
+						class="tag-item"
+						href={`/tags/${encodeURIComponent(t)}`}
+						style={`--w:${Math.min(1, 0.55 + n * 0.12)}`}
+					>
+						#{t}
+						<sup>{n}</sup>
+					</a>
+				))
+			}
+		</div>
+	</section>
+
+	<!-- 站点统计（对齐 Mizuki SiteStats） -->
+	<section class="card-base widget">
+		<h3 class="widget-title"><span class="material-symbols-rounded text-[1.15rem]">monitoring</span>站点统计</h3>
+		<ul class="stats">
+			<li><span class="material-symbols-rounded text-[1.1rem]">article</span><span>文章</span><span class="num">{postCount}</span></li>
+			<li><span class="material-symbols-rounded text-[1.1rem]">label</span><span>标签</span><span class="num">{tags.length}</span></li>
+			<li><span class="material-symbols-rounded text-[1.1rem]">calendar_month</span><span>建站</span><span class="num">{days}</span><span>天</span></li>
+		</ul>
+	</section>
+</aside>
+
+<script>
+	// widget-header 作为内联元素注册（轻量，避免额外组件文件）
+</script>
+
+<style>
+	.sidebar {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		position: sticky;
+		top: 5.5rem;
+		align-self: start;
+	}
+	.widget { padding: 1.1rem 1.2rem; }
+	.widget-title {
+		display: flex; align-items: center; gap: 0.4rem;
+		margin: 0 0 0.9rem; font-size: 1rem; color: var(--deep-text);
+	}
+	.widget-title .text-[1.15rem] { color: var(--primary); }
+
+	.profile { text-align: center; }
+	.avatar {
+		width: 4.5rem; height: 4.5rem;
+		border-radius: 50%;
+		object-fit: cover;
+		margin: 0 auto 0.6rem;
+		border: 2px solid var(--line-divider);
+	}
+	.p-name { font-weight: 700; font-size: 1.1rem; }
+	.p-sub { color: var(--content-meta); font-size: 0.85rem; margin-top: 0.2rem; }
+	.p-socials { display: flex; justify-content: center; gap: 0.5rem; margin-top: 0.8rem; }
+	.p-social {
+		display: inline-flex; align-items: center; justify-content: center;
+		width: 2.2rem; height: 2.2rem;
+		border-radius: 50%;
+		background: var(--btn-regular-bg);
+		color: var(--btn-content);
+		transition: background 0.2s;
+	}
+	.p-social:hover { background: var(--btn-regular-bg-hover); }
+
+	.cat-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; }
+	.cat-item {
+		display: flex; align-items: center; gap: 0.6rem;
+		padding: 0.45rem 0.6rem; border-radius: 0.6rem;
+		color: var(--deep-text); transition: background 0.15s;
+	}
+	.cat-item:hover { background: var(--btn-plain-bg-hover); color: var(--primary); }
+	.cat-item .text-[1.1rem] { color: var(--primary); }
+	.cat-name { flex: 1; font-weight: 500; }
+	.cat-num { color: var(--content-meta); font-size: 0.85rem; }
+
+	.tag-cloud { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+	.tag-item {
+		font-size: calc(0.72rem + 0.18rem * var(--w, 1));
+		padding: 0.2rem 0.6rem;
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--primary) 10%, transparent);
+		color: var(--btn-content);
+		transition: background 0.2s;
+	}
+	.tag-item:hover { background: color-mix(in oklab, var(--primary) 22%, transparent); }
+	.tag-item sup { font-size: 0.65em; opacity: 0.7; }
+
+	.stats { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.55rem; }
+	.stats li {
+		display: flex; align-items: center; gap: 0.5rem;
+		color: var(--content-meta); font-size: 0.88rem;
+	}
+	.stats li .text-[1.1rem] { color: var(--primary); }
+	.stats .num { margin-left: auto; color: var(--deep-text); font-weight: 600; }
+</style>

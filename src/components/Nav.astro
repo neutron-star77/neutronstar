@@ -1,124 +1,152 @@
 ---
-import { NAV, SITE } from '../config';
-const path = Astro.url.pathname;
-const isActive = (link: string) =>
-  link === '/' ? path === '/' : path.startsWith(link);
+import { NAV, SITE } from "../config";
+import ThemeSwitch from "../components/ThemeSwitch.svelte";
+
+// 导航项二层结构支持：若 text 含 "·" 则拆出子标题（简化为无子菜单，Mizuki 用 dropdown）
+const links = NAV;
+const isHome = Astro.url.pathname === "/" || Astro.url.pathname === "";
+const transparentMode = "semi";
 ---
 
-<header class="nav-root">
-  <nav class="container nav-inner" aria-label="主导航">
-    <a href="/" class="brand">
-      <span class="brand-dot"></span>
-      <span class="neon-text">{SITE.title}</span>
-    </a>
-    <ul class="nav-links">
-      {NAV.map((item) => (
-        <li>
-          <a href={item.link} class:list={['nav-link', { active: isActive(item.link) }]}>
-            <span class="nav-icon">{item.icon}</span>
-            <span class="nav-text">{item.text}</span>
-          </a>
-        </li>
-      ))}
-    </ul>
-    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题" title="切换主题">
-      <span class="icon-sun">☀</span>
-      <span class="icon-moon">☾</span>
-    </button>
-  </nav>
-</header>
+<div
+	id="navbar"
+	class="z-50 onload-animation group"
+	data-transparent-mode={transparentMode}
+	data-is-home={isHome}
+>
+	<div
+		class="absolute h-8 left-0 right-0 -top-8 bg-(--card-bg) transition"
+	>
+	</div>
+	<div
+		class="!overflow-visible max-w-[var(--layout-page-width)] h-[4.5rem] mx-auto flex items-center justify-between px-4"
+	>
+		<!-- Logo / 站名 -->
+		<a
+			href="/"
+			class="btn-plain scale-animation rounded-lg h-[2.5rem] md:h-[3.25rem] px-5 font-bold active:scale-95 shrink-0 transition-all duration-300"
+		>
+			<div class="flex flex-row items-center text-md">
+				<span class="material-symbols-rounded text-[1.75rem] mr-2">home_pin_outline</span>
+				<span class="dark:text-white text-black">{SITE.title}</span>
+			</div>
+		</a>
+
+		<!-- 桌面端导航 -->
+		<nav
+			id="navbar-links-container"
+			class="hidden md:flex items-center space-x-1 transition-opacity duration-300"
+		>
+			{
+				links.map((l) => (
+					<a
+						href={l.link}
+						class="btn-plain scale-animation rounded-lg h-11 px-4 flex items-center gap-1.5 font-medium active:scale-95 transition-all"
+					>
+						{l.icon && (
+							<span class="material-symbols-rounded text-[1.1rem]">{l.icon}</span>
+						)}
+						<span>{l.text}</span>
+					</a>
+				))
+			}
+		</nav>
+
+		<!-- 右侧操作 -->
+		<div class="flex items-center gap-1">
+			<a
+				href="/rss.xml"
+				aria-label="RSS"
+				class="btn-plain scale-animation rounded-lg h-11 w-11 active:scale-90"
+			>
+				<span class="material-symbols-rounded text-[1.25rem]">rss_feed</span>
+			</a>
+			<!-- 主题切换（Svelte，对齐 Mizuki ThemeSwitch） -->
+			<ThemeSwitch client:only="svelte" />
+			<!-- 移动端菜单按钮 -->
+			<button
+				aria-label="Menu"
+				class="btn-plain scale-animation rounded-lg w-11 h-11 active:scale-90 md:!hidden"
+				id="nav-menu-switch"
+			>
+				<span class="material-symbols-rounded text-[1.25rem]">unfold_more</span>
+			</button>
+		</div>
+	</div>
+
+	<!-- 移动端抽屉面板（对齐 Mizuki NavMenuPanel） -->
+	<div
+		id="nav-menu-panel"
+		class="float-panel float-panel-closed md:hidden fixed left-4 right-4 top-[5.5rem] max-h-[70vh] overflow-y-auto z-50"
+	>
+		<nav class="flex flex-col py-2">
+			{
+				links.map((l) => (
+					<a
+						href={l.link}
+						class="dropdown-item"
+						onclick="document.getElementById('nav-menu-panel')?.classList.add('float-panel-closed')"
+					>
+						<span class="flex items-center gap-2">
+							{l.icon && (
+								<span class="material-symbols-rounded text-[1.1rem]">{l.icon}</span>
+							)}
+							{l.text}
+						</span>
+						<span class="material-symbols-rounded text-[1.1rem]">chevron_right</span>
+					</a>
+				))
+			}
+		</nav>
+	</div>
+</div>
 
 <script>
-  const btn = document.getElementById('theme-toggle');
-  btn?.addEventListener('click', () => {
-    const root = document.documentElement;
-    const isDark = root.classList.toggle('dark');
-    try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch (e) {}
-  });
-</script>
+	// 移动端抽屉开关
+	const menuBtn = document.getElementById("nav-menu-switch");
+	const menuPanel = document.getElementById("nav-menu-panel");
+	if (menuBtn && menuPanel) {
+		menuBtn.addEventListener("click", () => {
+			menuPanel.classList.toggle("float-panel-closed");
+		});
+		document.addEventListener("click", (e) => {
+			const t = e.target as Node;
+			if (
+				!menuPanel.classList.contains("float-panel-closed") &&
+				!menuPanel.contains(t) &&
+				!menuBtn.contains(t)
+			) {
+				menuPanel.classList.add("float-panel-closed");
+			}
+		});
+	}
 
-<style>
-  .nav-root {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 50;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    background: color-mix(in oklab, var(--page-bg) 55%, transparent);
-    border-bottom: 1px solid var(--card-border);
-    transition: background 0.3s ease, border-color 0.3s ease;
-  }
-  .nav-inner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 4rem;
-  }
-  .brand {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-weight: 700;
-    font-size: 1.12rem;
-    letter-spacing: 0.02em;
-  }
-  .brand-dot {
-    width: 0.7rem;
-    height: 0.7rem;
-    border-radius: 50%;
-    background: var(--primary);
-    box-shadow: var(--neon-glow);
-    animation: pulse 2.4s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    50% { transform: scale(1.25); opacity: 0.7; }
-  }
-  .nav-links {
-    display: flex;
-    gap: 0.3rem;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-  .nav-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.4rem 0.8rem;
-    border-radius: 0.7rem;
-    color: var(--muted);
-    font-size: 0.92rem;
-    transition: color 0.2s, background 0.2s;
-  }
-  .nav-link:hover {
-    color: var(--text);
-    background: color-mix(in oklab, var(--primary) 12%, transparent);
-  }
-  .nav-link.active {
-    color: var(--text);
-    background: color-mix(in oklab, var(--primary) 18%, transparent);
-    box-shadow: inset 0 0 0 1px var(--card-border);
-  }
-  .theme-toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.4rem;
-    height: 2.4rem;
-    border-radius: 0.7rem;
-    border: 1px solid var(--card-border);
-    background: color-mix(in oklab, var(--primary) 8%, transparent);
-    color: var(--text);
-    cursor: pointer;
-    font-size: 1rem;
-    transition: background 0.2s, transform 0.2s;
-  }
-  .theme-toggle:hover { background: color-mix(in oklab, var(--primary) 18%, transparent); transform: translateY(-1px); }
-  .icon-moon { display: none; }
-  .dark .icon-sun { display: none; }
-  .dark .icon-moon { display: inline; }
-  @media (max-width: 640px) {
-    .nav-text { display: none; }
-    .nav-icon { font-size: 1.1rem; }
-  }
-</style>
+	// 顶栏滚动检测（Mizuki semifull 逻辑简化）
+	const navbar = document.getElementById("navbar");
+	function initNavbar() {
+		if (!navbar) return;
+		const isHomePage = navbar.dataset.isHome === "true";
+		if (!isHomePage) {
+			navbar.classList.add("scrolled");
+			return;
+		}
+		let ticking = false;
+		function update() {
+			const scrollTop = window.scrollY || document.documentElement.scrollTop;
+			if (scrollTop > 50) navbar?.classList.add("scrolled");
+			else navbar?.classList.remove("scrolled");
+			ticking = false;
+		}
+		function req() {
+			if (!ticking) {
+				requestAnimationFrame(update);
+				ticking = true;
+			}
+		}
+		window.addEventListener("scroll", req, { passive: true });
+		update();
+	}
+	initNavbar();
+	// @ts-ignore
+	window.initNavbarScroll = initNavbar;
+</script>
