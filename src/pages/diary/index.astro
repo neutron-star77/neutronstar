@@ -7,9 +7,9 @@ const entries = (await getCollection('diary')).sort((a, b) => b.data.date.valueO
 const bannerImg = GUITAO[10];
 ---
 
-<Base title="日记" description="航行日志">
+<Base title="说说" description="航行日志">
   <div class="page-banner" style={`--banner-img:url(${bannerImg})`}></div>
-  <h1 class="page-title">日记 <span class="neon-text">/ Diary</span></h1>
+  <h1 class="page-title">说说 <span class="neon-text">/ ShuoShuo</span></h1>
   <p class="page-sub">随手记录的星舰日常</p>
   <div class="timeline">
     {entries.map(async (d) => {

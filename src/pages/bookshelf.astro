@@ -1,0 +1,37 @@
+---
+import Base from "../layouts/Base.astro";
+import BookCard from "../components/BookCard.astro";
+import { books } from "../data/books";
+
+const total = books.length;
+const reading = books.filter((b) => b.status === "reading").length;
+const finished = books.filter((b) => b.status === "finished").length;
+---
+
+<Base title="书架" description="我的电子书书架 —— PDF / TXT / EPUB 阅读角落">
+	<section class="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
+		<!-- 页头 -->
+		<header class="mb-8">
+			<h1 class="flex items-center gap-2 text-3xl font-bold text-[var(--color-text)]">
+				<span class="text-[var(--brand)]">📚</span> 书架
+			</h1>
+			<p class="mt-2 text-sm text-[var(--color-text-muted)]">
+				共 {total} 本 · 在读 {reading} · 读完 {finished}。点击封面即可阅读或下载。
+			</p>
+		</header>
+
+		{
+			books.length > 0 ? (
+				<div class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+					{books.map((book) => (
+						<BookCard book={book} />
+					))}
+				</div>
+			) : (
+				<p class="rounded-xl border border-white/10 bg-[var(--color-surface)]/60 p-8 text-center text-[var(--color-text-muted)]">
+					书架还是空的，去 <code>src/data/books.ts</code> 添加你的第一本书吧～
+				</p>
+			)
+		}
+	</section>
+</Base>

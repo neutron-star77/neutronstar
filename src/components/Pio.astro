@@ -1,0 +1,221 @@
+---
+// 看板娘（Live2D）。机制移植自 Mizuki：iframe 加载 public/pio/live2d-host.html，
+// 由 l2d-widget.min.js 渲染 Cubism 模型。模型在 src/config.ts 的 PIO.model 配置。
+import { PIO } from "../config";
+
+const modelConfig = { path: PIO.model };
+const position = PIO.position === "right" ? "bottom-right" : "bottom-left";
+
+const tipsData: Record<string, unknown> = {};
+if (PIO.dialog?.welcome)
+	tipsData.welcomeMessage = Array.isArray(PIO.dialog.welcome)
+		? PIO.dialog.welcome
+		: [PIO.dialog.welcome];
+if (PIO.dialog?.touch)
+	tipsData.messages = Array.isArray(PIO.dialog.touch)
+		? PIO.dialog.touch
+		: [PIO.dialog.touch];
+
+const widgetConfig: Record<string, unknown> = {
+	model: modelConfig,
+	position,
+	size: PIO.width ?? 280,
+	transitionDuration: 1500,
+	transitionType: "slide",
+	_hideAbout: true,
+};
+
+if (Object.keys(tipsData).length > 0) {
+	(modelConfig as Record<string, unknown>).tips = tipsData;
+}
+
+if (PIO.menus?.items && PIO.menus.items.length > 0) {
+	widgetConfig.menus = {
+		items: PIO.menus.items.map(({ icon, label, action }) => ({
+			icon,
+			label,
+			action,
+		})),
+		...(PIO.menus.align && { align: PIO.menus.align }),
+	};
+}
+
+const widgetWidth = PIO.width ?? 280;
+const hiddenOnMobile = PIO.hiddenOnMobile ?? true;
+const isRight = PIO.position === "right";
+---
+
+{
+	PIO.enable && (
+		<iframe
+			id="l2d-iframe"
+			src="/pio/live2d-host.html"
+			allowtransparency="true"
+			style={
+				"position: fixed; z-index: 999; pointer-events: none; border: none; bottom: 0;" +
+				(isRight ? " right: 0;" : " left: 0;") +
+				" width: " +
+				widgetWidth +
+				"px;" +
+				" height: 600px;" +
+				" opacity: 0;"
+			}
+			data-config={JSON.stringify(widgetConfig)}
+			data-hidden-on-mobile={hiddenOnMobile ? "true" : "false"}
+			data-width={widgetWidth}
+		></iframe>
+	)
+}
+
+<script>
+	type PioController = {
+		update: (
+			el: HTMLIFrameElement,
+			config: Record<string, unknown>,
+			hiddenOnMobile: boolean,
+		) => void;
+	};
+
+	const win = window as Window & { __nsPioController?: PioController };
+	const PIO_MOBILE_BREAKPOINT = 768;
+	const scriptEl = document.currentScript as HTMLScriptElement | null;
+	const renderedEl =
+		scriptEl?.previousElementSibling instanceof HTMLIFrameElement &&
+		scriptEl.previousElementSibling.id === "l2d-iframe"
+			? scriptEl.previousElementSibling
+			: null;
+	const frames = Array.from(
+		document.querySelectorAll<HTMLIFrameElement>("#l2d-iframe"),
+	);
+	const el = frames[0] ?? renderedEl;
+	const configSource = renderedEl ?? el;
+
+	for (const frame of frames) {
+		if (frame !== el) frame.remove();
+	}
+
+	if (el && configSource) {
+		const config = JSON.parse(configSource.dataset.config || "{}");
+		const hiddenOnMobile = configSource.dataset.hiddenOnMobile === "true";
+
+		if (!win.__nsPioController) {
+			const menuActions: Record<string, () => void> = {
+				home: () => (window.location.href = "/"),
+				scrollToTop: () => window.scrollTo({ top: 0, behavior: "smooth" }),
+			};
+
+			let currentEl: HTMLIFrameElement | null = null;
+			let currentConfig: Record<string, unknown> = {};
+			let currentHiddenOnMobile = true;
+			let isTransitioning = false;
+			let initSent = false;
+			let currentConfigKey = "";
+			let pendingInit: number | undefined;
+			let swupHooksRegistered = false;
+
+			function applyVisibility() {
+				if (!currentEl) return;
+				if (
+					currentHiddenOnMobile &&
+					window.innerWidth <= PIO_MOBILE_BREAKPOINT
+				) {
+					currentEl.style.display = "none";
+				} else {
+					currentEl.style.display = "";
+				}
+			}
+
+			function postInit() {
+				if (!currentEl || initSent || isTransitioning) return;
+				if (
+					currentHiddenOnMobile &&
+					window.innerWidth <= PIO_MOBILE_BREAKPOINT
+				)
+					return;
+				currentEl.contentWindow?.postMessage(
+					{ type: "l2d-init", config: currentConfig },
+					"*",
+				);
+				initSent = true;
+			}
+
+			function scheduleInit() {
+				window.clearTimeout(pendingInit);
+				const run = () => {
+					pendingInit = window.setTimeout(postInit, 0);
+				};
+				if (window.requestIdleCallback) {
+					window.requestIdleCallback(run, { timeout: 2000 });
+				} else {
+					pendingInit = window.setTimeout(postInit, 500);
+				}
+			}
+
+			function handleMessage(e: MessageEvent) {
+				if (!currentEl || e.source !== currentEl.contentWindow) return;
+				if (e.data.type === "l2d-loaded") {
+					const h = e.data.contentHeight || 500;
+					currentEl.style.height = h + "px";
+					currentEl.style.opacity = "1";
+					currentEl.style.pointerEvents = "auto";
+				}
+				if (e.data.type === "l2d-action") {
+					menuActions[e.data.action]?.();
+				}
+			}
+
+			function setupSwupHooks() {
+				const swup = window.swup;
+				if (swupHooksRegistered || !swup?.hooks) return;
+				swupHooksRegistered = true;
+				swup.hooks.on("link:click", () => {
+					isTransitioning = true;
+				});
+				swup.hooks.on("visit:end", () => {
+					isTransitioning = false;
+					scheduleInit();
+				});
+			}
+
+			window.addEventListener("message", handleMessage);
+			window.addEventListener("resize", () => {
+				applyVisibility();
+				scheduleInit();
+			});
+
+			if (window.swup) {
+				setupSwupHooks();
+			} else {
+				document.addEventListener("swup:enable", setupSwupHooks, {
+					once: true,
+				});
+			}
+
+			win.__nsPioController = {
+				update(nextEl, nextConfig, nextHiddenOnMobile) {
+					const isNewFrame = currentEl !== nextEl;
+					const nextConfigKey = JSON.stringify(nextConfig);
+					currentEl = nextEl;
+					currentConfig = nextConfig;
+					currentHiddenOnMobile = nextHiddenOnMobile;
+					if (isNewFrame || currentConfigKey !== nextConfigKey) {
+						initSent = false;
+						currentConfigKey = nextConfigKey;
+					}
+					if (isNewFrame) {
+						nextEl.addEventListener("load", () => {
+							initSent = false;
+							scheduleInit();
+						});
+					}
+					applyVisibility();
+					if (nextEl.contentDocument?.readyState === "complete") {
+						scheduleInit();
+					}
+				},
+			};
+		}
+
+		win.__nsPioController.update(el, config, hiddenOnMobile);
+	}
+</script>

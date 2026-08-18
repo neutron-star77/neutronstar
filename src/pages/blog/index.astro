@@ -8,10 +8,10 @@ const posts = (await getCollection('blog')).sort((a, b) => b.data.pubDate.valueO
 const bannerImg = GUITAO[1];
 ---
 
-<Base title="日志" description="星舰航行日志">
+<Base title="杂谈" description="星舰航行日志">
   <div class="page-banner" style={`--banner-img:url(${bannerImg})`}></div>
-  <h1 class="page-title">日志 <span class="neon-text">/ Blog</span></h1>
-  <p class="page-sub">共 {posts.length} 篇日志</p>
+  <h1 class="page-title">杂谈 <span class="neon-text">/ Blog</span></h1>
+  <p class="page-sub">共 {posts.length} 篇杂谈</p>
   <div class="grid">
     {posts.map((p, i) => (
       <PostCard href={`/blog/${p.id}`} title={p.data.title} description={p.data.description}

@@ -1,0 +1,74 @@
+---
+import Base from "../layouts/Base.astro";
+import { getCollection } from "astro:content";
+
+const posts = (await getCollection("blog")).sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+
+const byYear = new Map<number, typeof posts>();
+for (const p of posts) {
+	const y = p.data.pubDate.getFullYear();
+	if (!byYear.has(y)) byYear.set(y, []);
+	byYear.get(y)!.push(p);
+}
+const years = [...byYear.keys()].sort((a, b) => b - a);
+const total = posts.length;
+
+const fmtDate = (d: Date) =>
+	`${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+---
+
+<Base title="归档" description="全部文章的归档">
+	<section class="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
+		<header class="mb-8">
+			<h1 class="flex items-center gap-2 text-3xl font-bold text-[var(--color-text)]">
+				<span class="text-[var(--brand)]">🗂️</span> 归档
+			</h1>
+			<p class="mt-2 text-sm text-[var(--color-text-muted)]">共 {total} 篇文章。</p>
+		</header>
+
+		{
+			years.map((year) => (
+				<div class="mb-10">
+					<div class="mb-3 flex items-baseline gap-3 border-b border-white/10 pb-2">
+						<span class="text-2xl font-bold text-[var(--brand)]">{year}</span>
+						<span class="text-xs text-[var(--color-text-muted)]">
+							{byYear.get(year)!.length} 篇
+						</span>
+					</div>
+					<ul class="space-y-1">
+						{byYear.get(year)!.map((p) => (
+							<li>
+								<a
+									href={`/blog/${encodeURIComponent(p.id)}`}
+									class="group flex items-center gap-3 rounded-lg px-2 py-1.5 transition hover:bg-white/5"
+								>
+									<span class="w-12 shrink-0 font-mono text-xs text-[var(--color-text-muted)]">
+										{fmtDate(p.data.pubDate)}
+									</span>
+									<span class="flex-1 truncate text-sm text-[var(--color-text)] group-hover:text-[var(--brand)]">
+										{p.data.title}
+									</span>
+									{p.data.tags && p.data.tags[0] && (
+										<span class="hidden shrink-0 rounded bg-white/5 px-2 py-0.5 text-[11px] text-[var(--color-text-muted)] sm:inline">
+											{p.data.tags[0]}
+										</span>
+									)}
+								</a>
+							</li>
+						))}
+					</ul>
+				</div>
+			))
+		}
+
+		{
+			total === 0 && (
+				<p class="rounded-xl border border-white/10 bg-[var(--color-surface)]/60 p-8 text-center text-[var(--color-text-muted)]">
+					还没有文章，去写一篇吧～
+				</p>
+			)
+		}
+	</section>
+</Base>

@@ -1,0 +1,49 @@
+---
+import Base from "../layouts/Base.astro";
+import { friends } from "../data/friends";
+
+const firstChar = (s: string) => (s || "?").slice(0, 1);
+---
+
+<Base title="友链" description="朋友们的站点">
+	<section class="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6">
+		<header class="mb-8">
+			<h1 class="flex items-center gap-2 text-3xl font-bold text-[var(--color-text)]">
+				<span class="text-[var(--brand)]">🔗</span> 友链
+			</h1>
+			<p class="mt-2 text-sm text-[var(--color-text-muted)]">
+				互相串门的好地方。想交换友链？欢迎留言或邮件联系我。
+			</p>
+		</header>
+
+		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+			{
+				friends.map((f) => (
+					<a
+						href={f.url}
+						target="_blank"
+						rel="noopener"
+						class="group flex items-center gap-4 rounded-xl border border-white/10 bg-[var(--color-surface)]/70 p-4 shadow-lg shadow-black/20 backdrop-blur-md transition hover:-translate-y-1 hover:border-[var(--brand)]/50"
+						style={`border-left:3px solid ${f.color ?? "var(--brand)"}`}
+					>
+						<div class="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-[var(--brand)] to-[var(--brand-3)] text-white flex items-center justify-center text-lg font-bold">
+							{f.avatar ? (
+								<img src={f.avatar} alt={f.name} class="h-full w-full object-cover" loading="lazy" />
+							) : (
+								firstChar(f.name)
+							)}
+						</div>
+						<div class="min-w-0">
+							<p class="truncate font-semibold text-[var(--color-text)] group-hover:text-[var(--brand)]">
+								{f.name}
+							</p>
+							<p class="truncate text-xs text-[var(--color-text-muted)]">
+								{f.description ?? f.url}
+							</p>
+						</div>
+					</a>
+				))
+			}
+		</div>
+	</section>
+</Base>
