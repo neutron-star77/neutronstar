@@ -1,0 +1,29 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import PostCard from '../../components/PostCard.astro';
+import { SITE, GUITAO } from '../../config';
+
+const posts = (await getCollection('blog')).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+const bannerImg = GUITAO[1];
+---
+
+<Base title="日志" description="星舰航行日志">
+  <div class="page-banner" style={`--banner-img:url(${bannerImg})`}></div>
+  <h1 class="page-title">日志 <span class="neon-text">/ Blog</span></h1>
+  <p class="page-sub">共 {posts.length} 篇日志</p>
+  <div class="grid">
+    {posts.map((p, i) => (
+      <PostCard href={`/blog/${p.id}`} title={p.data.title} description={p.data.description}
+        date={p.data.pubDate} tags={p.data.tags} cover={p.data.cover || GUITAO[i % GUITAO.length]} kind="文章" />
+    ))}
+  </div>
+</Base>
+
+<style>
+  .page-title { font-size: 2.2rem; margin: 0; }
+  .page-sub { color: var(--color-muted); margin: 0.4rem 0 2rem; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; }
+  @media (max-width: 900px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+</style>

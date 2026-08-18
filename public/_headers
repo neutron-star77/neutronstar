@@ -1,0 +1,6 @@
+# Cloudflare Pages 缓存策略
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate

@@ -1,0 +1,46 @@
+---
+import Base from '../layouts/Base.astro';
+import GlassCard from '../components/GlassCard.astro';
+import NeonButton from '../components/NeonButton.astro';
+import { SITE, SOCIAL } from '../config';
+---
+
+<Base title="关于" description={`关于 ${SITE.author}`}>
+  <section class="about">
+    <div class="avatar neon-border">🛰️</div>
+    <h1 class="neon-text">{SITE.author}</h1>
+    <p class="lead">{SITE.description}</p>
+    <p>
+      这是一艘以 Astro 7 为引擎、Cloudflare Pages 为母港的星舰。
+      在这里记录代码、宇宙与日常的航迹。极少量的 Three.js 星场作为装饰，
+      内容全部以 Markdown 存放于 Git 仓库，可版本化、可迁移。
+    </p>
+    <div class="actions">
+      <NeonButton href={SOCIAL.github}>GitHub</NeonButton>
+      <NeonButton href={SOCIAL.email}>联系我</NeonButton>
+    </div>
+
+    <div class="facts">
+      <GlassCard><b>引擎</b><span>Astro 7 + Tailwind v4</span></GlassCard>
+      <GlassCard><b>母港</b><span>Cloudflare Pages</span></GlassCard>
+      <GlassCard><b>内容</b><span>Markdown / Git</span></GlassCard>
+      <GlassCard><b>视觉</b><span>深色霓虹 · 玻璃拟态</span></GlassCard>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .about { max-width: 42rem; margin-inline: auto; text-align: center; }
+  .avatar {
+    width: 5rem; height: 5rem; border-radius: 50%;
+    display: grid; place-items: center; font-size: 2rem; margin: 0 auto 1.2rem;
+  }
+  .about h1 { font-size: 2rem; margin: 0; }
+  .lead { color: var(--color-muted); margin: 0.6rem 0 1.5rem; }
+  .about p { color: var(--color-text); }
+  .actions { display: flex; gap: 1rem; justify-content: center; margin: 1.5rem 0 2.5rem; }
+  .facts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; text-align: left; }
+  .facts b { display: block; color: var(--color-neon); font-size: 0.85rem; margin-bottom: 0.2rem; }
+  .facts span { color: var(--color-muted); }
+  @media (max-width: 640px) { .facts { grid-template-columns: 1fr; } }
+</style>

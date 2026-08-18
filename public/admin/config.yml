@@ -1,0 +1,54 @@
+backend:
+  name: github
+  repo: neutron-star77/neutronstar
+  branch: main
+  # OAuth 代理由本项目自带的 Cloudflare Pages Function 提供
+  base_url: https://blog.neutronstar.fun/api/oauth
+  auth_scope: repo
+
+# 媒体文件：在后台上传的图片存到仓库 public/uploads，站点以 /uploads 访问
+media_folder: /public/uploads
+public_folder: /uploads
+
+collections:
+  - name: blog
+    label: 博客文章
+    folder: src/content/blog
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { name: title, label: 标题, widget: string }
+      - { name: description, label: 摘要, widget: text, required: false }
+      - { name: pubDate, label: 发布日期, widget: datetime }
+      - { name: tags, label: 标签, widget: list, required: false }
+      - { name: cover, label: 封面图, widget: image, required: false }
+      - { name: draft, label: 草稿, widget: boolean, default: false, required: false }
+      - { name: body, label: 正文, widget: markdown }
+
+  - name: diary
+    label: 日记
+    folder: src/content/diary
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { name: title, label: 标题, widget: string }
+      - { name: date, label: 日期, widget: datetime }
+      - { name: mood, label: 心情, widget: string, required: false }
+      - { name: tags, label: 标签, widget: list, required: false }
+      - { name: body, label: 正文, widget: markdown }
+
+  - name: project
+    label: 项目
+    folder: src/content/project
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { name: title, label: 标题, widget: string }
+      - { name: description, label: 摘要, widget: text, required: false }
+      - { name: date, label: 日期, widget: datetime }
+      - { name: tags, label: 标签, widget: list, required: false }
+      - { name: cover, label: 封面图, widget: image, required: false }
+      - { name: link, label: 外链, widget: string, required: false }
+      - { name: repo, label: 仓库, widget: string, required: false }
+      - { name: featured, label: 精选, widget: boolean, default: false, required: false }
+      - { name: body, label: 正文, widget: markdown }

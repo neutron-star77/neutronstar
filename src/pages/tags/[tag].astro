@@ -1,0 +1,47 @@
+---
+import { getCollection } from 'astro:content';
+import type { GetStaticPaths } from 'astro';
+import Base from '../../layouts/Base.astro';
+import PostCard from '../../components/PostCard.astro';
+
+export const getStaticPaths = (async () => {
+  const [blog, projects] = await Promise.all([
+    getCollection('blog', ({ data }) => !data.draft),
+    getCollection('project'),
+  ]);
+  const all = [...blog.map((e) => ({ ...e, kind: '博客', url: `/blog/${e.id}`, date: e.data.pubDate })),
+    ...projects.map((e) => ({ ...e, kind: '项目', url: `/projects/${e.id}`, date: e.data.date }))];
+  const tags = new Set<string>();
+  for (const p of all) for (const t of p.data.tags) tags.add(t);
+  return [...tags].map((tag) => ({
+    params: { tag },
+    props: {
+      tag,
+      posts: all.filter((p) => p.data.tags.includes(tag))
+        .sort((a, b) => b.date.valueOf() - a.date.valueOf()),
+    },
+  }));
+}) satisfies GetStaticPaths;
+
+const { tag, posts } = Astro.props;
+---
+
+<Base title={`#${tag}`} description={`标签 ${tag} 下的文章`}>
+  <h1 class="page-title">#<span class="neon-text">{tag}</span></h1>
+  <p class="page-sub">{posts.length} 篇</p>
+  <div class="grid">
+    {posts.map((p) => (
+      <PostCard href={p.url} title={p.data.title} description={p.data.description}
+        date={p.date} tags={p.data.tags} cover={p.data.cover} kind={p.kind} />
+    ))}
+  </div>
+  <p class="back"><a href="/tags">← 全部标签</a></p>
+</Base>
+
+<style>
+  .page-title { font-size: 2.2rem; margin: 0; }
+  .page-sub { color: var(--color-muted); margin: 0.4rem 0 2rem; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.2rem; }
+  .back { margin-top: 2rem; }
+  @media (max-width: 820px) { .grid { grid-template-columns: 1fr; } }
+</style>

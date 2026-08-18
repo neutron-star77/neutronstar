@@ -1,0 +1,41 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+
+const [blog, projects] = await Promise.all([
+  getCollection('blog', ({ data }) => !data.draft),
+  getCollection('project'),
+]);
+
+const counts = new Map<string, number>();
+for (const p of [...blog, ...projects]) {
+  for (const t of p.data.tags) counts.set(t, (counts.get(t) ?? 0) + 1);
+}
+const tags = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+---
+
+<Base title="标签" description="全部标签">
+  <h1 class="page-title">标签 <span class="neon-text">/ Tags</span></h1>
+  <p class="page-sub">共 {tags.length} 个标签</p>
+  <div class="cloud">
+    {tags.map(([tag, n]) => (
+      <a class="tag-pill" href={`/tags/${encodeURIComponent(tag)}`}>#{tag}<sup>{n}</sup></a>
+    ))}
+  </div>
+</Base>
+
+<style>
+  .page-title { font-size: 2.2rem; margin: 0; }
+  .page-sub { color: var(--color-muted); margin: 0.4rem 0 2rem; }
+  .cloud { display: flex; flex-wrap: wrap; gap: 0.8rem; }
+  .tag-pill {
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    background: rgba(91, 140, 255, 0.1);
+    border: 1px solid rgba(91, 140, 255, 0.3);
+    color: var(--color-neon);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .tag-pill:hover { transform: translateY(-2px); box-shadow: var(--neon-glow); }
+  .tag-pill sup { color: var(--color-muted); margin-left: 0.2rem; }
+</style>

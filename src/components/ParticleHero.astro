@@ -1,0 +1,176 @@
+---
+// 克制的 Three.js 使用：仅首页 Hero 一处星场粒子，带降级与 reduced-motion 处理
+interface Props {
+  title?: string;
+  subtitle?: string;
+  bg?: string; // 可选背景图（鬼刀素材，jsDelivr CDN）
+}
+const { title = 'NeutronStar', subtitle = '星舰航行日志', bg } = Astro.props;
+---
+
+<section class="hero">
+  {bg && <img class="hero-bg" src={bg} alt="" aria-hidden="true" />}
+  <div class="hero-scrim" aria-hidden="true"></div>
+  <canvas id="hero-canvas" aria-hidden="true"></canvas>
+  <div class="hero-content float-in">
+    <p class="hero-eyebrow">// SYSTEM ONLINE</p>
+    <h1 class="hero-title neon-text">{title}</h1>
+    <p class="hero-sub">{subtitle}</p>
+    <div class="hero-actions">
+      <slot name="actions" />
+    </div>
+  </div>
+  <div class="hero-scroll" aria-hidden="true">▼</div>
+</section>
+
+<script>
+  import * as THREE from 'three';
+
+  const canvas = document.getElementById('hero-canvas') as HTMLCanvasElement | null;
+  if (canvas) {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(70, 1, 0.1, 100);
+    camera.position.z = 18;
+
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    const COUNT = 900;
+    const positions = new Float32Array(COUNT * 3);
+    for (let i = 0; i < COUNT; i++) {
+      positions[i * 3] = (Math.random() - 0.5) * 60;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 40;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 40;
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+    const mat = new THREE.PointsMaterial({
+      color: 0x8fb0ff,
+      size: 0.13,
+      transparent: true,
+      opacity: 0.85,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const points = new THREE.Points(geo, mat);
+    scene.add(points);
+
+    const resize = () => {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    let mx = 0, my = 0;
+    window.addEventListener('mousemove', (e) => {
+      mx = (e.clientX / window.innerWidth - 0.5) * 0.4;
+      my = (e.clientY / window.innerHeight - 0.5) * 0.4;
+    });
+
+    let raf = 0;
+    const render = () => {
+      points.rotation.y += 0.0009;
+      points.rotation.x += 0.0004;
+      camera.position.x += (mx * 4 - camera.position.x) * 0.04;
+      camera.position.y += (-my * 4 - camera.position.y) * 0.04;
+      camera.lookAt(scene.position);
+      renderer.render(scene, camera);
+      if (!reduce) raf = requestAnimationFrame(render);
+    };
+    render();
+
+    // 降级模式下仅渲染一帧
+    if (reduce) {
+      window.removeEventListener('resize', resize);
+    }
+  }
+</script>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: 78vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    overflow: hidden;
+    margin-block: -1rem;
+  }
+  /* 背景图（鬼刀素材） */
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+    filter: brightness(0.85) saturate(1.05);
+  }
+  /* 暗角 + 压暗，保证星场与霓虹文字清晰 */
+  .hero-scrim {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(to bottom, rgba(10, 12, 20, 0.35), rgba(10, 12, 20, 0.55)),
+      radial-gradient(ellipse at 50% 40%, transparent 35%, var(--page-bg) 100%);
+  }
+  /* 底部渐变衔接（同款 banner 语言），平滑过渡到正文 */
+  .hero::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 9rem;
+    pointer-events: none;
+    background: linear-gradient(to bottom, transparent, var(--page-bg));
+    z-index: 1;
+  }
+  #hero-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+  }
+  .hero-content {
+    position: relative;
+    z-index: 2;
+  }
+  .hero-eyebrow {
+    font-family: var(--font-mono);
+    color: var(--color-neon-3);
+    letter-spacing: 0.3em;
+    font-size: 0.8rem;
+    margin: 0 0 0.5rem;
+  }
+  .hero-title {
+    font-size: clamp(2.6rem, 8vw, 5rem);
+    font-weight: 800;
+    margin: 0;
+    line-height: 1.05;
+  }
+  .hero-sub {
+    color: var(--color-muted);
+    font-size: clamp(1rem, 2.5vw, 1.3rem);
+    margin: 1rem 0 2rem;
+  }
+  .hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+  .hero-scroll {
+    position: absolute;
+    bottom: 1.4rem;
+    z-index: 2;
+    color: var(--color-muted);
+    animation: bob 2s ease-in-out infinite;
+  }
+  @keyframes bob { 50% { transform: translateY(8px); } }
+</style>

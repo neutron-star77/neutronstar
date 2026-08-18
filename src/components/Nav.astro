@@ -1,0 +1,124 @@
+---
+import { NAV, SITE } from '../config';
+const path = Astro.url.pathname;
+const isActive = (link: string) =>
+  link === '/' ? path === '/' : path.startsWith(link);
+---
+
+<header class="nav-root">
+  <nav class="container nav-inner" aria-label="主导航">
+    <a href="/" class="brand">
+      <span class="brand-dot"></span>
+      <span class="neon-text">{SITE.title}</span>
+    </a>
+    <ul class="nav-links">
+      {NAV.map((item) => (
+        <li>
+          <a href={item.link} class:list={['nav-link', { active: isActive(item.link) }]}>
+            <span class="nav-icon">{item.icon}</span>
+            <span class="nav-text">{item.text}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题" title="切换主题">
+      <span class="icon-sun">☀</span>
+      <span class="icon-moon">☾</span>
+    </button>
+  </nav>
+</header>
+
+<script>
+  const btn = document.getElementById('theme-toggle');
+  btn?.addEventListener('click', () => {
+    const root = document.documentElement;
+    const isDark = root.classList.toggle('dark');
+    try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch (e) {}
+  });
+</script>
+
+<style>
+  .nav-root {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 50;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    background: color-mix(in oklab, var(--page-bg) 55%, transparent);
+    border-bottom: 1px solid var(--card-border);
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 4rem;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    font-size: 1.12rem;
+    letter-spacing: 0.02em;
+  }
+  .brand-dot {
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 50%;
+    background: var(--primary);
+    box-shadow: var(--neon-glow);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    50% { transform: scale(1.25); opacity: 0.7; }
+  }
+  .nav-links {
+    display: flex;
+    gap: 0.3rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 0.7rem;
+    color: var(--muted);
+    font-size: 0.92rem;
+    transition: color 0.2s, background 0.2s;
+  }
+  .nav-link:hover {
+    color: var(--text);
+    background: color-mix(in oklab, var(--primary) 12%, transparent);
+  }
+  .nav-link.active {
+    color: var(--text);
+    background: color-mix(in oklab, var(--primary) 18%, transparent);
+    box-shadow: inset 0 0 0 1px var(--card-border);
+  }
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 0.7rem;
+    border: 1px solid var(--card-border);
+    background: color-mix(in oklab, var(--primary) 8%, transparent);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.2s, transform 0.2s;
+  }
+  .theme-toggle:hover { background: color-mix(in oklab, var(--primary) 18%, transparent); transform: translateY(-1px); }
+  .icon-moon { display: none; }
+  .dark .icon-sun { display: none; }
+  .dark .icon-moon { display: inline; }
+  @media (max-width: 640px) {
+    .nav-text { display: none; }
+    .nav-icon { font-size: 1.1rem; }
+  }
+</style>

@@ -1,0 +1,232 @@
+@import "tailwindcss";
+@import "@fontsource/jetbrains-mono";
+
+/* 本地圆体（从 Mizuki 移植：拉丁/假名圆体 + 中文圆体） */
+@font-face {
+  font-family: "Zen Maru Gothic";
+  src: url("../assets/fonts/ZenMaruGothic-Medium.woff2") format("woff2");
+  font-weight: 400 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Loli";
+  src: url("../assets/fonts/loli.woff2") format("woff2");
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ===== 设计令牌（对齐 Mizuki：OKLCH 双主题 + 玻璃拟态 + 圆角） ===== */
+@theme {
+  --font-sans: "Zen Maru Gothic", "Loli", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+
+  --radius-card: 1rem;
+  --radius-large: 1.25rem;
+  --radius-pill: 999px;
+}
+
+/* ---- 浅色主题（默认） ---- */
+:root {
+  --hue: 255;
+  --primary: oklch(0.6 0.17 var(--hue));
+  --primary-soft: oklch(0.72 0.13 var(--hue));
+  --text: oklch(0.28 0.03 var(--hue));
+  --muted: oklch(0.5 0.04 var(--hue));
+  --page-bg: oklch(0.97 0.01 var(--hue));
+  --surface: oklch(1 0 0);
+  --border: oklch(0.85 0.03 var(--hue));
+  --card-glass: oklch(1 0 0 / 0.6);
+  --card-border: oklch(0.7 0.08 var(--hue) / 0.35);
+  --code-bg: oklch(0.96 0.01 var(--hue));
+  --neon-glow: 0 0 20px oklch(0.6 0.17 var(--hue) / 0.35);
+
+  /* 兼容别名：旧组件沿用以下命名 */
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-surface: var(--surface);
+  --color-bg: var(--page-bg);
+  --color-neon: var(--primary);
+  --color-neon-2: oklch(0.7 0.16 320);
+  --color-neon-3: oklch(0.5 0.13 320);
+  --color-accent: oklch(0.7 0.16 320);
+  --glass-bg: var(--card-glass);
+  --glass-border: var(--card-border);
+}
+
+/* ---- 深色主题 ---- */
+.dark {
+  --primary: oklch(0.72 0.15 var(--hue));
+  --primary-soft: oklch(0.8 0.11 var(--hue));
+  --text: oklch(0.92 0.02 var(--hue));
+  --muted: oklch(0.72 0.04 var(--hue));
+  --page-bg: oklch(0.18 0.03 var(--hue));
+  --surface: oklch(0.22 0.035 var(--hue));
+  --border: oklch(0.4 0.05 var(--hue));
+  --card-glass: oklch(0.24 0.04 var(--hue) / 0.55);
+  --card-border: oklch(0.7 0.12 var(--hue) / 0.3);
+  --code-bg: oklch(0.16 0.03 var(--hue));
+  --neon-glow: 0 0 22px oklch(0.72 0.15 var(--hue) / 0.4);
+}
+
+* { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+  scrollbar-gutter: stable;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--page-bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* 背景壁纸层（柔和光晕，配合克制 Three.js 星场） */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(1100px 600px at 12% -8%, oklch(0.6 0.17 var(--hue) / 0.22), transparent 60%),
+    radial-gradient(900px 520px at 108% 8%, oklch(0.72 0.15 var(--hue) / 0.18), transparent 55%),
+    radial-gradient(800px 700px at 50% 118%, oklch(0.5 0.12 320 / 0.12), transparent 55%);
+  pointer-events: none;
+  transition: background 0.4s ease;
+}
+
+a { color: inherit; text-decoration: none; }
+
+/* ===== 通用工具类 ===== */
+.glass {
+  background: var(--card-glass);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: var(--radius-card);
+  box-shadow: 0 8px 30px oklch(0.2 0.05 var(--hue) / 0.12);
+}
+
+.neon-text {
+  background: linear-gradient(100deg, var(--primary), oklch(0.7 0.16 320));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.neon-border {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    linear-gradient(120deg, var(--primary), oklch(0.7 0.15 320)) border-box;
+  box-shadow: var(--neon-glow);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.18rem 0.65rem;
+  font-size: 0.78rem;
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklab, var(--primary) 14%, transparent);
+  border: 1px solid color-mix(in oklab, var(--primary) 32%, transparent);
+  color: var(--primary);
+}
+
+/* 顶部渐变高光（对齐 Mizuki） */
+.top-gradient-highlight {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 180px;
+  background: linear-gradient(to bottom,
+    oklch(1 0 0 / 0.45) 0%, oklch(1 0 0 / 0.25) 35%, transparent 100%);
+  pointer-events: none;
+  z-index: 20;
+}
+.dark .top-gradient-highlight {
+  background: linear-gradient(to bottom,
+    oklch(0 0 0 / 0.5) 0%, oklch(0 0 0 / 0.25) 35%, transparent 100%);
+}
+
+/* ===== 文章排版 ===== */
+.prose { color: var(--text); }
+.prose h2, .prose h3, .prose h4 {
+  margin-top: 2rem;
+  scroll-margin-top: 5rem;
+  color: var(--text);
+}
+.prose a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.prose code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  background: color-mix(in oklab, var(--primary) 12%, transparent);
+  padding: 0.1em 0.35em;
+  border-radius: 0.35em;
+}
+.prose pre {
+  padding: 1rem;
+  border-radius: 0.75rem;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  background: var(--code-bg);
+}
+.prose blockquote {
+  border-left: 3px solid var(--primary);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 1.5rem 0;
+}
+.prose img { border-radius: 0.75rem; max-width: 100%; }
+
+/* 容器 */
+.container {
+  width: 100%;
+  max-width: 72rem;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+}
+
+/* 列表页 banner（与文章 .post-banner 同款渐变） */
+.page-banner {
+  height: 7rem;
+  margin: 0 0 1.6rem;
+  border-radius: var(--radius-card);
+  background-image:
+    linear-gradient(120deg, color-mix(in oklab, var(--page-bg) 58%, transparent), color-mix(in oklab, var(--page-bg) 38%, transparent)),
+    radial-gradient(120% 150% at 0% 0%, color-mix(in oklab, var(--color-neon) 55%, transparent), transparent 60%),
+    radial-gradient(120% 150% at 100% 0%, oklch(0.7 0.16 320 / 0.45), transparent 60%),
+    var(--banner-img, none);
+  background-size: cover;
+  background-position: center;
+  border: 1px solid var(--color-border);
+}
+
+/* 动画 */
+@keyframes floatIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.float-in { animation: floatIn 0.6s ease both; }
+
+/* ===== Swup 页面转场（淡入淡出 + 轻微位移） ===== */
+.transition-main { transition: opacity 0.35s ease, transform 0.35s ease; }
+html.is-animating .transition-main { opacity: 0; transform: translateY(10px); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; scroll-behavior: auto !important; transition: none !important; }
+}
