@@ -1,0 +1,9 @@
+name = "neutronstar"
+main = "src/worker.ts"
+compatibility_date = "2025-08-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Astro 构建产物(dist)作为静态资源由本 Worker 托管；
+# /api/oauth/* 由 worker.ts 处理(Decap 的 GitHub OAuth 代理)，其余请求回退到静态资源。
+# 注：git 部署时 Cloudflare 会自动读取本文件并执行 wrangler deploy，无需在面板填输出目录。
+assets = { directory = "./dist", binding = "ASSETS", html_handling = "serve-last-if-404", not_found_handling = "404-page" }
