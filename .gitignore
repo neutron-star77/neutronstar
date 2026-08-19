@@ -3,6 +3,10 @@ node_modules
 dist
 .astro
 .wrangler
+
+# 本地调试临时文件
+_dev.log
+_tail.log
 astro
 */.astro
 package-lock.json
