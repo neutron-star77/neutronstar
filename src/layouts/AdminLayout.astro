@@ -7,8 +7,8 @@ interface Props {
   active?: string;
 }
 const { title = '管理后台', active = '' } = Astro.props;
-const base = new URL('/').origin;
-const host = new URL(base).host;
+const base = Astro.url.origin;
+const host = Astro.url.host;
 const siteUrl = import.meta.env.SITE || base;
 ---
 
