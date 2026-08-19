@@ -1,0 +1,162 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getPostById } from '@lib/posts';
+import type { Post } from '@lib/types';
+
+const idParam = Number(Astro.url.searchParams.get('id'));
+const post: Post | null = Number.isInteger(idParam) && idParam > 0 ? await getPostById(idParam) : null;
+const isEdit = !!post;
+
+const val = (v: string | undefined) => (v ?? '');
+const tagsStr = (p: Post | null) => (p ? p.tags.join(', ') : '');
+---
+
+<AdminLayout title={isEdit ? '编辑文章' : '新建文章'} active="edit">
+  <div class="admin-card">
+    <h2 class="admin-title">{isEdit ? '编辑内容' : '新建内容'}</h2>
+    <p class="admin-sub">{isEdit ? `正在编辑 #${post!.id}（${post!.title}）` : '填写以下信息，右侧可实时预览 Markdown 效果。'}</p>
+
+    <div class="editor-grid">
+      <div class="editor-pane">
+        <form id="postForm" class="admin-form">
+          <input type="hidden" id="id" value={post?.id ?? ''} />
+          <label class="field">
+            标题 *
+            <input type="text" id="title" required value={val(post?.title)} placeholder="文章标题" />
+          </label>
+          <div class="form-grid">
+            <label class="field">
+              类型
+              <select id="type">
+                <option value="blog" selected={!isEdit || post?.type === 'blog'}>文章</option>
+                <option value="diary" selected={isEdit && post?.type === 'diary'}>说说</option>
+                <option value="project" selected={isEdit && post?.type === 'project'}>项目</option>
+              </select>
+            </label>
+            <label class="field">
+              Slug（留空自动生成）
+              <input type="text" id="slug" value={val(post?.slug)} placeholder="my-first-post" />
+            </label>
+            <label class="field">
+              分类
+              <input type="text" id="category" value={val(post?.category)} placeholder="技术 / 生活 / 读书…" />
+            </label>
+            <label class="field">
+              标签（逗号分隔）
+              <input type="text" id="tags" value={tagsStr(post)} placeholder="astro, d1, 随笔" />
+            </label>
+            <label class="field">
+              发布日期
+              <input type="date" id="date" value={val(post?.date?.slice(0, 10))} />
+            </label>
+            <label class="field">
+              封面图 URL
+              <input type="url" id="cover" value={val(post?.cover)} placeholder="https://…" />
+            </label>
+          </div>
+          <label class="field">
+            摘要
+            <input type="text" id="description" value={val(post?.description)} placeholder="用于列表页的简短描述（可选）" />
+          </label>
+          <label class="field">
+            正文（Markdown）*
+            <textarea id="content" class="code-lg" required placeholder="支持 Markdown / 代码高亮 / 图片">{post?.content ?? ''}</textarea>
+          </label>
+          <div class="form-actions">
+            <label class="check-item" style="font-size:14px">
+              <input type="checkbox" id="draft" checked={isEdit && post!.draft} />
+              保存为草稿（不对外发布）
+            </label>
+            <button type="submit" class="btn btn-primary">{isEdit ? '保存修改' : '发布'}</button>
+            <button type="button" class="btn" onclick="location.href='/admin'">取消</button>
+            <span class="hint" id="hint"></span>
+          </div>
+        </form>
+      </div>
+
+      <div class="preview-pane">
+        <div class="pane-label">实时预览</div>
+        <div class="preview-box" id="preview"><span style="color:var(--admin-muted)">在左侧输入内容后自动刷新预览…</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script define:vars={{ postId: post?.id ?? null }}>
+    const title = document.getElementById('title') as HTMLInputElement;
+    const type = document.getElementById('type') as HTMLSelectElement;
+    const slug = document.getElementById('slug') as HTMLInputElement;
+    const category = document.getElementById('category') as HTMLInputElement;
+    const tags = document.getElementById('tags') as HTMLInputElement;
+    const date = document.getElementById('date') as HTMLInputElement;
+    const cover = document.getElementById('cover') as HTMLInputElement;
+    const description = document.getElementById('description') as HTMLInputElement;
+    const content = document.getElementById('content') as HTMLTextAreaElement;
+    const draft = document.getElementById('draft') as HTMLInputElement;
+    const hint = document.getElementById('hint') as HTMLSpanElement;
+    const preview = document.getElementById('preview') as HTMLDivElement;
+
+    // 实时预览（防抖）
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const refreshPreview = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(async () => {
+        const md = content.value;
+        if (!md.trim()) {
+          preview.innerHTML = '<span style="color:var(--admin-muted)">在左侧输入内容后自动刷新预览…</span>';
+          return;
+        }
+        try {
+          const res = await fetch('/api/preview', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ markdown: md }),
+          });
+          const data = await res.json();
+          preview.innerHTML = data.html || '<span style="color:var(--admin-red)">渲染失败</span>';
+        } catch {
+          preview.innerHTML = '<span style="color:var(--admin-red)">预览请求失败</span>';
+        }
+      }, 500);
+    };
+    content.addEventListener('input', refreshPreview);
+
+    // 保存
+    document.getElementById('postForm')!.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        type: type.value,
+        slug: slug.value.trim(),
+        title: title.value.trim(),
+        category: category.value.trim(),
+        tags: tags.value,
+        date: date.value,
+        cover: cover.value.trim(),
+        description: description.value.trim(),
+        content: content.value,
+        draft: draft.checked,
+      };
+      hint.textContent = '保存中…';
+      const url = postId ? `/api/posts/${postId}` : '/api/posts';
+      const method = postId ? 'PUT' : 'POST';
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          hint.textContent = '';
+          (window as any).toast?.(postId ? '已保存' : '已发布', 'ok');
+          setTimeout(() => (location.href = '/admin'), 700);
+        } else {
+          const data = await res.json().catch(() => null);
+          hint.textContent = '';
+          (window as any).toast?.(data?.error || '保存失败', 'err');
+        }
+      } catch {
+        hint.textContent = '';
+        (window as any).toast?.('网络错误', 'err');
+      }
+    });
+  </script>
+</AdminLayout>

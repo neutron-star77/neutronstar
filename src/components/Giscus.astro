@@ -1,0 +1,40 @@
+---
+import { getSettings } from '@lib/settings';
+
+const settings = await getSettings();
+const repo = settings.giscus_repo;
+const repoId = settings.giscus_repo_id;
+const category = settings.giscus_category;
+const categoryId = settings.giscus_category_id;
+const enabled = settings.show_comments !== '0';
+---
+
+{
+  enabled && repo && (
+    <section class="post-comments card-base onload-animation" aria-label="评论">
+      <h2 class="post-comments-title">评论</h2>
+      <div class="giscus" id="giscus"></div>
+    </section>
+  )
+}
+
+<script is:inline define:vars={{ repo, repoId, category, categoryId }}>
+  const d = document;
+  const g = d.createElement('script');
+  g.src = 'https://giscus.app/client.js';
+  g.setAttribute('data-repo', repo);
+  g.setAttribute('data-repo-id', repoId);
+  g.setAttribute('data-category', category);
+  g.setAttribute('data-category-id', categoryId);
+  g.setAttribute('data-mapping', 'pathname');
+  g.setAttribute('data-strict', '0');
+  g.setAttribute('data-reactions-enabled', '1');
+  g.setAttribute('data-emit-metadata', '0');
+  g.setAttribute('data-input-position', 'bottom');
+  g.setAttribute('data-theme', 'dark');
+  g.setAttribute('data-lang', 'zh-CN');
+  g.setAttribute('crossorigin', 'anonymous');
+  g.async = true;
+  const s = d.getElementById('giscus');
+  if (s) s.appendChild(g);
+</script>

@@ -1,0 +1,55 @@
+---
+import '../../styles/admin.css';
+import { SITE } from '../../config';
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>登录 · NeutronStar 管理后台</title>
+  </head>
+  <body>
+    <div class="login-wrap">
+      <div class="login-card">
+        <h1>NeutronStar</h1>
+        <p class="sub">管理后台 · 请输入管理员密码</p>
+        <form id="loginForm">
+          <label class="field">
+            管理员密码
+            <input type="password" id="password" autofocus autocomplete="current-password" required />
+          </label>
+          <div class="login-msg" id="msg"></div>
+          <button type="submit" class="btn btn-primary" style="justify-content:center">登 录</button>
+        </form>
+        <p style="margin:20px 0 0;color:var(--admin-muted);font-size:12px">默认密码：neutronstar（登录后请在“站点设置”中修改）</p>
+      </div>
+    </div>
+
+    <script>
+      const form = document.getElementById('loginForm') as HTMLFormElement;
+      const msg = document.getElementById('msg') as HTMLDivElement;
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const pw = (document.getElementById('password') as HTMLInputElement).value;
+        msg.textContent = '';
+        try {
+          const res = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: pw }),
+          });
+          if (!res.ok) {
+            const data = await res.json().catch(() => null);
+            msg.textContent = (data && data.error) || '登录失败';
+            return;
+          }
+          location.href = '/admin';
+        } catch {
+          msg.textContent = '网络错误，请重试';
+        }
+      });
+    </script>
+  </body>
+</html>

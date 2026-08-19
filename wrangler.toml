@@ -1,9 +1,14 @@
 name = "neutronstar"
-main = "src/worker.ts"
-compatibility_date = "2025-08-01"
+main = "@astrojs/cloudflare/entrypoints/server"
+compatibility_date = "2025-08-19"
 compatibility_flags = ["nodejs_compat"]
 
-# Astro 构建产物(dist)作为静态资源由本 Worker 托管；
-# /api/oauth/* 由 worker.ts 处理(Decap 的 GitHub OAuth 代理)，其余请求回退到静态资源。
-# 注：git 部署时 Cloudflare 会自动读取本文件并执行 wrangler deploy，无需在面板填输出目录。
-assets = { directory = "./dist", binding = "ASSETS", html_handling = "auto-trailing-slash", not_found_handling = "404-page" }
+# 自定义域名路由
+routes = [
+  { pattern = "blog.neutronstar.fun/*", zone_name = "neutronstar.fun" }
+]
+
+# Cloudflare D1 数据库（后台写入、前端请求时读取）
+d1_databases = [
+  { binding = "DB", database_name = "neutronstar", database_id = "c76b53ae-c3c5-47a4-a696-9037a9b14c6f" }
+]

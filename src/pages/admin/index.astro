@@ -1,0 +1,125 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { listPosts, allTags } from '@lib/posts';
+import type { Post } from '@lib/types';
+
+const posts = await listPosts(undefined, { drafts: true });
+const tagCount = (await allTags()).length;
+const countBy = (t: string) => posts.filter((p) => p.type === t && !p.draft).length;
+const drafts = posts.filter((p) => p.draft);
+
+const stats = [
+  { label: '文章', value: countBy('blog'), cls: 'c-cyan' },
+  { label: '说说', value: countBy('diary'), cls: 'c-amber' },
+  { label: '项目', value: countBy('project'), cls: 'c-purple' },
+  { label: '草稿', value: drafts.length, cls: 'c-red' },
+  { label: '标签', value: tagCount, cls: 'c-green' },
+];
+
+const typeLabel: Record<string, string> = { blog: '文章', diary: '说说', project: '项目' };
+const fmt = (d: string) => (d ? d.slice(0, 10) : '—');
+---
+
+<AdminLayout title="仪表盘" active="index">
+  <div class="admin-card" style="margin-bottom:18px">
+    <h2 class="admin-title">内容总览</h2>
+    <div class="stat-grid">
+      {
+        stats.map((s) => (
+          <div class="stat-card">
+            <div class={`stat-num ${s.cls}`}>{s.value}</div>
+            <div class="stat-label">{s.label}</div>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+
+  <div class="admin-card">
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px">
+      <h2 class="admin-title" style="margin:0;flex:1">内容列表</h2>
+      <a href="/admin/edit" class="btn btn-primary btn-sm">＋ 新建</a>
+    </div>
+
+    <div class="tabs" id="tabs">
+      <button class="tab-btn active" data-filter="all">全部</button>
+      <button class="tab-btn" data-filter="blog">文章</button>
+      <button class="tab-btn" data-filter="diary">说说</button>
+      <button class="tab-btn" data-filter="project">项目</button>
+      <button class="tab-btn" data-filter="draft">草稿</button>
+    </div>
+
+    {
+      posts.length === 0 ? (
+        <div class="empty">还没有内容，点右上角「＋ 新建」开始创作。</div>
+      ) : (
+        <table class="admin-table" id="postTable">
+          <thead>
+            <tr>
+              <th style="width:44%">标题</th>
+              <th>类型</th>
+              <th>日期</th>
+              <th>状态</th>
+              <th style="text-align:right">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {posts.map((p: Post) => (
+              <tr data-type={p.draft ? 'draft' : p.type}>
+                <td>
+                  <a class="row-title" href={`/admin/edit?id=${p.id}`}>{p.title}</a>
+                  {p.tags.length > 0 && (
+                    <div class="row-meta">{p.tags.map((t) => `#${t}`).join(' ')}</div>
+                  )}
+                </td>
+                <td><span class={`badge ${p.draft ? 'draft' : p.type}`}>{p.draft ? '草稿' : typeLabel[p.type]}</span></td>
+                <td class="row-meta">{fmt(p.date)}</td>
+                <td>{p.draft ? <span class="badge draft">未发布</span> : <span class="badge" style="color:var(--admin-green);border-color:rgba(52,211,153,.4)">已发布</span>}</td>
+                <td style="text-align:right">
+                  <div class="row-actions">
+                    <a href={`/${p.type}/${p.slug}`} target="_blank" style="color:var(--admin-muted)">预览</a>
+                    <a href={`/admin/edit?id=${p.id}`}>编辑</a>
+                    <button class="del" data-id={p.id} data-title={p.title}>删除</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )
+    }
+  </div>
+
+  <script>
+    // Tab 过滤
+    const tabs = document.getElementById('tabs') as HTMLDivElement;
+    const rows = Array.from(document.querySelectorAll<HTMLTableRowElement>('#postTable tbody tr'));
+    tabs.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('.tab-btn') as HTMLButtonElement | null;
+      if (!btn) return;
+      tabs.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      const f = btn.dataset.filter || 'all';
+      rows.forEach((row) => {
+        const t = row.dataset.type || '';
+        row.style.display = f === 'all' || t === f ? '' : 'none';
+      });
+    });
+
+    // 删除（带确认）
+    document.querySelectorAll('#postTable .del').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = (btn as HTMLButtonElement).dataset.id;
+        const title = (btn as HTMLButtonElement).dataset.title;
+        if (!confirm(`确定删除「${title}」？此操作不可恢复。`)) return;
+        const res = await fetch(`/api/posts/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          (window as any).toast?.('已删除', 'ok');
+          setTimeout(() => location.reload(), 500);
+        } else {
+          (window as any).toast?.('删除失败', 'err');
+        }
+      });
+    });
+  </script>
+</AdminLayout>

@@ -3,11 +3,15 @@ import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 import svelte from '@astrojs/svelte';
 import { vitePreprocess } from '@astrojs/svelte';
+import cloudflare from '@astrojs/cloudflare';
 import swup from '@swup/astro';
 
-// 静态构建，部署到 Cloudflare Pages（构建输出 dist，无需服务端适配器）
+// 运行时渲染(SSR) + Cloudflare D1 数据层：后台写入 D1 → 前端请求时读取，秒级生效
 export default defineConfig({
   site: 'https://blog.neutronstar.fun',
+  output: 'server',
+  adapter: cloudflare({ imageService: 'passthrough' }),
+  session: false,
   trailingSlash: 'ignore',
   server: { port: 8080 },
   vite: {
@@ -20,6 +24,7 @@ export default defineConfig({
         '@constants': '/src/constants',
         '@config': '/src/config',
         '@i18n': '/src/i18n',
+        '@lib': '/src/lib',
       },
     },
   },

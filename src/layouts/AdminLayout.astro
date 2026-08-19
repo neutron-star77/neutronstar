@@ -1,0 +1,59 @@
+---
+import '../styles/admin.css';
+import { SITE } from '../config';
+
+interface Props {
+  title?: string;
+  active?: string;
+}
+const { title = '管理后台', active = '' } = Astro.props;
+const base = new URL('/').origin;
+const host = new URL(base).host;
+const siteUrl = import.meta.env.SITE || base;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} · NeutronStar 管理后台</title>
+  </head>
+  <body>
+    <header class="admin-topbar">
+      <span class="admin-brand">NeutronStar Admin</span>
+      <nav class="admin-nav">
+        <a href="/admin" class={active === 'index' ? 'active' : ''}>仪表盘</a>
+        <a href="/admin/edit" class={active === 'edit' ? 'active' : ''}>新建文章</a>
+        <a href="/admin/settings" class={active === 'settings' ? 'active' : ''}>站点设置</a>
+      </nav>
+      <div class="spacer"></div>
+      <a href="/" target="_blank" style="color:var(--admin-muted);font-size:13px">查看站点 ↗</a>
+      <form method="POST" action="/api/logout" style="display:inline">
+        <button type="submit" class="out">退出</button>
+      </form>
+    </header>
+
+    <main class="admin-main">
+      <slot />
+    </main>
+
+    <div class="toast" id="toast"></div>
+    <script>
+      interface GlobalWindow extends Window {
+        toast?: (msg: string, type?: 'ok' | 'err') => void;
+      }
+      const w = window as GlobalWindow;
+      let toastTimer: ReturnType<typeof setTimeout> | null = null;
+      w.toast = (msg: string, type: 'ok' | 'err' = 'ok') => {
+        const el = document.getElementById('toast')!;
+        el.textContent = msg;
+        el.className = `toast show ${type}`;
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          el.className = 'toast';
+        }, 2600);
+      };
+    </script>
+  </body>
+</html>

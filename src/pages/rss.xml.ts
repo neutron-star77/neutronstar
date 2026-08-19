@@ -1,21 +1,22 @@
 import type { APIRoute } from 'astro';
-import { getCollection } from 'astro:content';
+import { listPosts } from '@lib/posts';
 import { SITE } from '../config';
 
 export const GET: APIRoute = async () => {
-  const posts = (await getCollection('blog', ({ data }) => !data.draft))
-    .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+  const posts = (await listPosts('blog')).sort((a, b) => b.date.localeCompare(a.date));
 
-  const items = posts.map((p) => {
-    const url = `${SITE.url}/blog/${p.id}`;
-    return `    <item>
-      <title>${escapeXml(p.data.title)}</title>
+  const items = posts
+    .map((p) => {
+      const url = `${SITE.url}/blog/${p.slug}`;
+      return `    <item>
+      <title>${escapeXml(p.title)}</title>
       <link>${url}</link>
       <guid>${url}</guid>
-      <pubDate>${p.data.pubDate.toUTCString()}</pubDate>
-      <description>${escapeXml(p.data.description)}</description>
+      <pubDate>${new Date(p.date).toUTCString()}</pubDate>
+      <description>${escapeXml(p.description)}</description>
     </item>`;
-  }).join('\n');
+    })
+    .join('\n');
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
@@ -32,6 +33,7 @@ ${items}
 };
 
 function escapeXml(s: string): string {
-  return s.replace(/[<>&'"]/g, (c) =>
-    ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c] as string));
+  return (s ?? '').replace(/[<>&'"]/g, (c) =>
+    ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c] as string),
+  );
 }

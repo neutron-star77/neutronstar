@@ -6,6 +6,7 @@ import Sidebar from "../components/Sidebar.astro";
 import BackToTop from "../components/BackToTop.astro";
 import SidebarTOC from "../components/SidebarTOC.svelte";
 import { SITE } from "../config";
+import { getToggles } from "@lib/settings";
 
 interface Props {
 	title?: string;
@@ -25,12 +26,17 @@ const {
 	banner = "",
 } = Astro.props;
 
+const toggles = await getToggles();
+
 const pageTitle = title
 	? `${title} · ${SITE.title}`
 	: `${SITE.title} · ${SITE.subtitle}`;
 const isHome = Astro.url.pathname === "/" || Astro.url.pathname === "";
 const bannerImg = banner || (isHome ? SITE.banner : "");
-const showBanner = !!bannerImg;
+const showBanner = !!bannerImg && toggles.show_banner;
+const showSidebar = sidebar && toggles.show_sidebar;
+const showTOC = headings.length > 0 && toggles.show_toc;
+const showBackToTop = toggles.show_backtotop;
 const hue = SITE.hue ?? 270;
 ---
 

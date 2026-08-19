@@ -1,10 +1,10 @@
 ---
-import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import PostCard from '../../components/PostCard.astro';
+import { listPosts } from '@lib/posts';
 import { SITE, GUITAO } from '../../config';
 
-const projects = (await getCollection('project')).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const projects = (await listPosts('project')).sort((a, b) => b.date.localeCompare(a.date));
 ---
 
 <Base title="项目" description="星舰搭载的项目">
@@ -12,8 +12,8 @@ const projects = (await getCollection('project')).sort((a, b) => b.data.date.val
   <p class="page-sub">共 {projects.length} 个项目</p>
   <div class="grid">
     {projects.map((p, i) => (
-      <PostCard href={`/projects/${p.id}`} title={p.data.title} description={p.data.description}
-        date={p.data.date} tags={p.data.tags} cover={p.data.cover || GUITAO[(i + 3) % GUITAO.length]} kind="项目" />
+      <PostCard href={`/projects/${p.slug}`} title={p.title} description={p.description}
+        date={p.date} tags={p.tags} cover={p.cover || GUITAO[(i + 3) % GUITAO.length]} kind="项目" />
     ))}
   </div>
 </Base>

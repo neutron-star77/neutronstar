@@ -1,0 +1,135 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getSettings } from '@lib/settings';
+import { COMPONENT_TOGGLES } from '@lib/types';
+
+const settings = await getSettings();
+const s = (k: string) => settings[k] ?? '';
+const on = (k: string) => settings[k] !== '0';
+---
+
+<AdminLayout title="站点设置" active="settings">
+  <div class="admin-card">
+    <h2 class="admin-title">基本信息</h2>
+    <form id="form1" class="admin-form">
+      <div class="form-grid">
+        <label class="field">
+          站点标题
+          <input type="text" id="site_title" value={s('site_title')} />
+        </label>
+        <label class="field">
+          站点副标题
+          <input type="text" id="site_subtitle" value={s('site_subtitle')} />
+        </label>
+        <label class="field full">
+          管理员密码（留空则不修改）
+          <input type="password" id="admin_password" autocomplete="new-password" placeholder="••••••••" />
+        </label>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">保存</button>
+        <span class="hint">修改密码后当前登录状态将失效，需重新登录。</span>
+      </div>
+    </form>
+  </div>
+
+  <div class="admin-card">
+    <h2 class="admin-title">前端组件开关</h2>
+    <p class="admin-sub">关闭后对应组件将不在前台渲染。</p>
+    <div class="check-grid">
+      {
+        COMPONENT_TOGGLES.map((t) => (
+          <label class="check-item">
+            <input type="checkbox" class="toggle" data-key={t.key} checked={on(t.key)} />
+            {t.label}
+          </label>
+        ))
+      }
+    </div>
+    <div style="margin-top:16px;display:flex;gap:10px;align-items:center">
+      <button type="button" class="btn btn-primary" id="saveToggles">保存开关</button>
+      <span class="hint" id="toggleHint"></span>
+    </div>
+  </div>
+
+  <div class="admin-card">
+    <h2 class="admin-title">Giscus 评论</h2>
+    <p class="admin-sub">在 GitHub 仓库启用 Giscus 后填入以下配置，前台文章页即可显示评论。</p>
+    <form id="form2" class="admin-form">
+      <div class="form-grid">
+        <label class="field">
+          Repo（owner/repo）
+          <input type="text" id="giscus_repo" value={s('giscus_repo')} placeholder="octocat/hello-world" />
+        </label>
+        <label class="field">
+          Repo ID
+          <input type="text" id="giscus_repo_id" value={s('giscus_repo_id')} />
+        </label>
+        <label class="field">
+          Category
+          <input type="text" id="giscus_category" value={s('giscus_category')} />
+        </label>
+        <label class="field">
+          Category ID
+          <input type="text" id="giscus_category_id" value={s('giscus_category_id')} />
+        </label>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">保存</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    interface GlobalWindow extends Window {
+      toast?: (msg: string, type?: 'ok' | 'err') => void;
+    }
+    const w = window as GlobalWindow;
+
+    async function save(map: Record<string, string>) {
+      const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(map),
+      });
+      return res.ok;
+    }
+
+    // 基本信息
+    document.getElementById('form1')!.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const map: Record<string, string> = {
+        site_title: (document.getElementById('site_title') as HTMLInputElement).value,
+        site_subtitle: (document.getElementById('site_subtitle') as HTMLInputElement).value,
+      };
+      const pw = (document.getElementById('admin_password') as HTMLInputElement).value;
+      if (pw) map.admin_password = pw;
+      const ok = await save(map);
+      w.toast?.(ok ? '已保存' : '保存失败', ok ? 'ok' : 'err');
+      if (ok && pw) setTimeout(() => (location.href = '/admin/login'), 900);
+    });
+
+    // 组件开关
+    document.getElementById('saveToggles')!.addEventListener('click', async () => {
+      const map: Record<string, string> = {};
+      document.querySelectorAll<HTMLInputElement>('.toggle').forEach((cb) => {
+        map[cb.dataset.key!] = cb.checked ? '1' : '0';
+      });
+      const ok = await save(map);
+      (document.getElementById('toggleHint') as HTMLSpanElement).textContent = ok ? '已保存 ✓' : '保存失败';
+    });
+
+    // Giscus
+    document.getElementById('form2')!.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const map: Record<string, string> = {
+        giscus_repo: (document.getElementById('giscus_repo') as HTMLInputElement).value,
+        giscus_repo_id: (document.getElementById('giscus_repo_id') as HTMLInputElement).value,
+        giscus_category: (document.getElementById('giscus_category') as HTMLInputElement).value,
+        giscus_category_id: (document.getElementById('giscus_category_id') as HTMLInputElement).value,
+      };
+      const ok = await save(map);
+      w.toast?.(ok ? '已保存' : '保存失败', ok ? 'ok' : 'err');
+    });
+  </script>
+</AdminLayout>

@@ -1,10 +1,10 @@
 ---
-import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import PostCard from '../../components/PostCard.astro';
+import { listPosts } from '@lib/posts';
 import { SITE, GUITAO } from '../../config';
 
-const posts = (await getCollection('blog')).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+const posts = (await listPosts('blog')).sort((a, b) => b.date.localeCompare(a.date));
 ---
 
 <Base title="杂谈" description="星舰航行日志">
@@ -12,8 +12,8 @@ const posts = (await getCollection('blog')).sort((a, b) => b.data.pubDate.valueO
   <p class="page-sub">共 {posts.length} 篇杂谈</p>
   <div class="grid">
     {posts.map((p, i) => (
-      <PostCard href={`/blog/${p.id}`} title={p.data.title} description={p.data.description}
-        date={p.data.pubDate} tags={p.data.tags} cover={p.data.cover || GUITAO[i % GUITAO.length]} kind="文章" />
+      <PostCard href={`/blog/${p.slug}`} title={p.title} description={p.description}
+        date={p.date} tags={p.tags} cover={p.cover || GUITAO[i % GUITAO.length]} kind="文章" />
     ))}
   </div>
 </Base>

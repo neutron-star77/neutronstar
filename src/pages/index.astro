@@ -1,11 +1,11 @@
 ---
-import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import PostCard from '../components/PostCard.astro';
+import { listPosts } from '@lib/posts';
 import { SITE, GUITAO } from '../config';
 
-const allBlog = (await getCollection('blog')).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
-const allProjects = (await getCollection('project')).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const allBlog = (await listPosts('blog')).sort((a, b) => b.date.localeCompare(a.date));
+const allProjects = (await listPosts('project')).sort((a, b) => b.date.localeCompare(a.date));
 const recentBlog = allBlog.slice(0, 6);
 const recentProjects = allProjects.slice(0, 4);
 ---
@@ -20,12 +20,12 @@ const recentProjects = allProjects.slice(0, 4);
 			{recentBlog.map((p, i) => (
 				<div class="post-card-item">
 					<PostCard
-						href={`/blog/${p.id}`}
-						title={p.data.title}
-						description={p.data.description}
-						date={p.data.pubDate}
-						tags={p.data.tags}
-						cover={p.data.cover || GUITAO[i % GUITAO.length]}
+						href={`/blog/${p.slug}`}
+						title={p.title}
+						description={p.description}
+						date={p.date}
+						tags={p.tags}
+						cover={p.cover || GUITAO[i % GUITAO.length]}
 						kind="文章"
 					/>
 				</div>
@@ -42,12 +42,12 @@ const recentProjects = allProjects.slice(0, 4);
 			{recentProjects.map((p, i) => (
 				<div class="post-card-item">
 					<PostCard
-						href={`/projects/${p.id}`}
-						title={p.data.title}
-						description={p.data.description}
-						date={p.data.date}
-						tags={p.data.tags}
-						cover={p.data.cover || GUITAO[(i + 5) % GUITAO.length]}
+						href={`/projects/${p.slug}`}
+						title={p.title}
+						description={p.description}
+						date={p.date}
+						tags={p.tags}
+						cover={p.cover || GUITAO[(i + 5) % GUITAO.length]}
 						kind="项目"
 					/>
 				</div>

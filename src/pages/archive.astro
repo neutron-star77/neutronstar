@@ -1,22 +1,22 @@
 ---
 import Base from "../layouts/Base.astro";
-import { getCollection } from "astro:content";
+import { listPosts } from "@lib/posts";
 
-const posts = (await getCollection("blog")).sort(
-	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
-);
+const posts = (await listPosts("blog")).sort((a, b) => b.date.localeCompare(a.date));
 
 const byYear = new Map<number, typeof posts>();
 for (const p of posts) {
-	const y = p.data.pubDate.getFullYear();
+	const y = new Date(p.date).getFullYear();
 	if (!byYear.has(y)) byYear.set(y, []);
 	byYear.get(y)!.push(p);
 }
 const years = [...byYear.keys()].sort((a, b) => b - a);
 const total = posts.length;
 
-const fmtDate = (d: Date) =>
-	`${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const fmtDate = (d: string) => {
+	const dt = new Date(d);
+	return `${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+};
 ---
 
 <Base title="归档" description="全部文章的归档">
@@ -41,18 +41,18 @@ const fmtDate = (d: Date) =>
 						{byYear.get(year)!.map((p) => (
 							<li>
 								<a
-									href={`/blog/${encodeURIComponent(p.id)}`}
+									href={`/blog/${encodeURIComponent(p.slug)}`}
 									class="group flex items-center gap-3 rounded-lg px-2 py-1.5 transition hover:bg-[var(--btn-plain-bg-hover)]"
 								>
 									<span class="w-12 shrink-0 font-mono text-xs text-[var(--content-meta)]">
-										{fmtDate(p.data.pubDate)}
+										{fmtDate(p.date ?? p.date)}
 									</span>
 									<span class="flex-1 truncate text-sm text-[var(--deep-text)] group-hover:text-[var(--primary)]">
-										{p.data.title}
+										{p.title}
 									</span>
-									{p.data.tags && p.data.tags[0] && (
+									{p.tags && p.tags[0] && (
 										<span class="hidden shrink-0 rounded bg-[var(--btn-regular-bg)] px-2 py-0.5 text-[11px] text-[var(--btn-content)] sm:inline">
-											{p.data.tags[0]}
+											{p.tags[0]}
 										</span>
 									)}
 								</a>
