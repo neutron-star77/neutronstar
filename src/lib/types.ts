@@ -63,4 +63,6 @@ export const DEFAULT_SETTINGS: SettingsMap = {
   giscus_repo_id: '',
   giscus_category: 'Announcements',
   giscus_category_id: '',
+  reset_email: '',             // 后台「忘记密码」登记邮箱（留空 = 关闭邮箱重置）
+  reset_email_from: '',        // 重置邮件发件人（留空用默认 onboarding@resend.dev）
 };

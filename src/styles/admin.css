@@ -337,6 +337,12 @@ textarea.code-lg { min-height: 380px; font-size: 13px; }
 .login-card .sub { color: var(--admin-muted); font-size: 13px; margin: 0 0 22px; }
 .login-card form { display: grid; gap: 14px; text-align: left; }
 .login-msg { color: var(--admin-red); font-size: 13px; min-height: 18px; }
+.login-card .forgot-link { margin: 16px 0 0; text-align: right; font-size: 13px; }
+.login-card .hint-default { margin: 20px 0 0; color: var(--admin-muted); font-size: 12px; }
+.forgot-box { margin-top: 16px; padding-top: 18px; border-top: 1px solid var(--admin-border); }
+.forgot-title { margin: 0 0 14px; font-size: 14px; font-weight: 600; text-align: center; }
+.forgot-box form { display: grid; gap: 12px; }
+.back-login { margin: 14px 0 0; font-size: 12.5px; text-align: center; color: var(--admin-muted); }
 
 .empty { text-align: center; color: var(--admin-muted); padding: 40px 0; }
 

@@ -1,0 +1,79 @@
+---
+import '../../styles/admin.css';
+import { SITE } from '../../config';
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>重置密码 · NeutronStar 管理后台</title>
+  </head>
+  <body>
+    <div class="login-wrap">
+      <div class="login-card">
+        <h1>NeutronStar</h1>
+        <p class="sub">设置新密码</p>
+        <form id="resetForm">
+          <label class="field">
+            新密码（至少 6 位）
+            <input type="password" id="password" autocomplete="new-password" required />
+          </label>
+          <label class="field">
+            确认新密码
+            <input type="password" id="password2" autocomplete="new-password" required />
+          </label>
+          <div class="login-msg" id="msg"></div>
+          <button type="submit" class="btn btn-primary" style="justify-content:center">重置密码</button>
+        </form>
+        <p class="back-login"><a href="/admin/login">← 返回登录</a></p>
+      </div>
+    </div>
+
+    <script>
+      const token = new URLSearchParams(location.search).get('token') || '';
+      const msg = document.getElementById('msg') as HTMLDivElement;
+      const form = document.getElementById('resetForm') as HTMLFormElement;
+
+      if (!token) {
+        form.hidden = true;
+        msg.style.color = 'var(--admin-red)';
+        msg.textContent = '重置链接无效或已过期，请重新发起重置。';
+      }
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const pw = (document.getElementById('password') as HTMLInputElement).value;
+        const pw2 = (document.getElementById('password2') as HTMLInputElement).value;
+        msg.style.color = '';
+        if (pw !== pw2) {
+          msg.textContent = '两次输入的密码不一致';
+          return;
+        }
+        if (pw.length < 6) {
+          msg.textContent = '新密码至少 6 位';
+          return;
+        }
+        try {
+          const res = await fetch('/api/reset', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, password: pw }),
+          });
+          const data = await res.json().catch(() => null);
+          if (res.ok) {
+            msg.style.color = 'var(--admin-green)';
+            msg.textContent = (data && data.message) || '密码已重置，即将跳转登录…';
+            setTimeout(() => (location.href = '/admin/login'), 1200);
+          } else {
+            msg.style.color = 'var(--admin-red)';
+            msg.textContent = (data && data.error) || '重置失败，请重试';
+          }
+        } catch {
+          msg.textContent = '网络错误，请重试';
+        }
+      });
+    </script>
+  </body>
+</html>

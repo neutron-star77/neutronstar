@@ -15,6 +15,8 @@ import { SITE } from '../../config';
       <div class="login-card">
         <h1>NeutronStar</h1>
         <p class="sub">管理后台 · 请输入管理员密码</p>
+
+        <!-- 登录表单 -->
         <form id="loginForm">
           <label class="field">
             管理员密码
@@ -23,13 +25,49 @@ import { SITE } from '../../config';
           <div class="login-msg" id="msg"></div>
           <button type="submit" class="btn btn-primary" style="justify-content:center">登 录</button>
         </form>
-        <p style="margin:20px 0 0;color:var(--admin-muted);font-size:12px">默认密码：neutronstar（登录后请在“站点设置”中修改）</p>
+
+        <p class="forgot-link"><a href="javascript:void(0)" id="forgotBtn">忘记密码？</a></p>
+
+        <!-- 忘记密码：邮箱重置 -->
+        <div class="forgot-box" id="forgotBox" hidden>
+          <p class="forgot-title">通过登记邮箱重置密码</p>
+          <form id="forgotForm">
+            <label class="field">
+              登记邮箱
+              <input type="email" id="forgotEmail" autocomplete="email" placeholder="you@example.com" />
+            </label>
+            <div class="login-msg" id="forgotMsg"></div>
+            <button type="submit" class="btn btn-primary" style="justify-content:center">发送重置邮件</button>
+          </form>
+          <p class="back-login"><a href="javascript:void(0)" id="backToLogin">← 返回登录</a></p>
+        </div>
+
+        <p class="hint-default">默认密码：neutronstar（登录后请在“站点设置”中修改）</p>
       </div>
     </div>
 
     <script>
       const form = document.getElementById('loginForm') as HTMLFormElement;
       const msg = document.getElementById('msg') as HTMLDivElement;
+
+      // 切换「忘记密码」面板
+      const forgotBox = document.getElementById('forgotBox') as HTMLDivElement;
+      const forgotForm = document.getElementById('forgotForm') as HTMLFormElement;
+      const forgotMsg = document.getElementById('forgotMsg') as HTMLDivElement;
+      const forgotEmail = document.getElementById('forgotEmail') as HTMLInputElement;
+      document.getElementById('forgotBtn')!.addEventListener('click', () => {
+        (document.getElementById('loginForm') as HTMLFormElement).hidden = true;
+        forgotBox.hidden = false;
+        forgotEmail.focus();
+      });
+      document.getElementById('backToLogin')!.addEventListener('click', () => {
+        forgotBox.hidden = true;
+        (document.getElementById('loginForm') as HTMLFormElement).hidden = false;
+        msg.textContent = '';
+        (document.getElementById('password') as HTMLInputElement).focus();
+      });
+
+      // 登录
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const pw = (document.getElementById('password') as HTMLInputElement).value;
@@ -48,6 +86,31 @@ import { SITE } from '../../config';
           location.href = '/admin';
         } catch {
           msg.textContent = '网络错误，请重试';
+        }
+      });
+
+      // 发送重置邮件
+      forgotForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = forgotEmail.value.trim();
+        if (!email) {
+          forgotMsg.textContent = '请输入邮箱';
+          return;
+        }
+        forgotMsg.style.color = '';
+        forgotMsg.textContent = '发送中…';
+        try {
+          const res = await fetch('/api/forgot', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+          });
+          const data = await res.json().catch(() => null);
+          forgotMsg.style.color = 'var(--admin-green)';
+          forgotMsg.textContent = (data && data.message) || '请检查邮箱收信';
+        } catch {
+          forgotMsg.style.color = '';
+          forgotMsg.textContent = '网络错误，请重试';
         }
       });
     </script>

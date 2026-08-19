@@ -25,6 +25,10 @@ const on = (k: string) => settings[k] !== '0';
           管理员密码（留空则不修改）
           <input type="password" id="admin_password" autocomplete="new-password" placeholder="••••••••" />
         </label>
+        <label class="field full">
+          重置邮箱（忘记密码时接收重置链接，留空则关闭该功能）
+          <input type="email" id="reset_email" value={s('reset_email')} placeholder="you@example.com" />
+        </label>
       </div>
       <div class="form-actions">
         <button type="submit" class="btn btn-primary">保存</button>
@@ -101,6 +105,7 @@ const on = (k: string) => settings[k] !== '0';
       const map: Record<string, string> = {
         site_title: (document.getElementById('site_title') as HTMLInputElement).value,
         site_subtitle: (document.getElementById('site_subtitle') as HTMLInputElement).value,
+        reset_email: (document.getElementById('reset_email') as HTMLInputElement).value.trim(),
       };
       const pw = (document.getElementById('admin_password') as HTMLInputElement).value;
       if (pw) map.admin_password = pw;
